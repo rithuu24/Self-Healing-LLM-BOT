@@ -1,14 +1,21 @@
 import subprocess
 import os
 import re
-from openai import OpenAI
+import google.generativeai as genai  # CHANGED: Import Google library
 from dotenv import load_dotenv
 
 # Load API Key from .env file
 load_dotenv()
 
-# Initialize OpenAI Client (Make sure OPENAI_API_KEY is in your .env)
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# CHANGED: Configure Gemini instead of OpenAI
+api_key = os.getenv("GOOGLE_API_KEY")
+if not api_key:
+    raise ValueError("❌ Error: GOOGLE_API_KEY is missing from .env file")
+
+genai.configure(api_key=api_key)
+
+# CHANGED: Use the Flash model (Fast & Free)
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 def run_tests(test_file_path):
     """
@@ -45,7 +52,7 @@ def get_ai_fix(error_log, source_code, test_code):
     """
     Sends the error and code to the LLM to generate a fix.
     """
-    print("🧠 Consulting AI for a fix...")
+    print("🧠 Consulting Gemini 1.5 Flash for a fix...")
     
     prompt = f"""
     You are an expert Python QA Engineer.
@@ -70,16 +77,11 @@ def get_ai_fix(error_log, source_code, test_code):
     """
     
     try:
-        response = client.chat.completions.create(
-            model="gpt-4o",  # or "gpt-3.5-turbo"
-            messages=[
-                {"role": "system", "content": "You are a helpful coding assistant. Output only raw code."},
-                {"role": "user", "content": prompt}
-            ]
-        )
+        # CHANGED: Call Gemini's generate_content method
+        response = model.generate_content(prompt)
         
-        # Clean up the response (remove markdown backticks if the AI adds them)
-        fixed_code = response.choices[0].message.content
+        # Clean up the response (Gemini often adds markdown)
+        fixed_code = response.text
         fixed_code = re.sub(r"^```python", "", fixed_code, flags=re.MULTILINE)
         fixed_code = re.sub(r"^```", "", fixed_code, flags=re.MULTILINE)
         
