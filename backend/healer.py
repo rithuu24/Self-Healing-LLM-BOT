@@ -1,68 +1,71 @@
 import subprocess
 import os
 import re
-import google.generativeai as genai  # CHANGED: Import Google library
+import google.generativeai as genai
 from dotenv import load_dotenv
 
-# Load API Key from .env file
-load_dotenv()
+# --- NEW: Import the Memory Engine ---
+try:
+    from memory import HealerMemory
+    memory_bank = HealerMemory()
+    print("🧠 Memory Bank Loaded.")
+except ImportError:
+    print("⚠️ Warning: memory.py not found. Running without Long-Term Memory.")
+    memory_bank = None
 
-# CHANGED: Configure Gemini instead of OpenAI
+# Load API Key
+load_dotenv()
 api_key = os.getenv("GOOGLE_API_KEY")
 if not api_key:
     raise ValueError("❌ Error: GOOGLE_API_KEY is missing from .env file")
 
 genai.configure(api_key=api_key)
-
-# CHANGED: Use the Flash model (Fast & Free)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
 def run_tests(test_file_path):
-    """
-    Runs pytest on a specific file and captures the output.
-    Returns: (success: bool, output: str)
-    """
+    """Runs pytest and returns (success, output)"""
     print(f"🚀 Running tests on {test_file_path}...")
-    
     result = subprocess.run(
         ["pytest", test_file_path],
         capture_output=True,
         text=True
     )
-    
-    # Combine stdout and stderr to get the full error message
-    full_output = result.stdout + result.stderr
-    
-    # Return True if exit code is 0 (Pass), False otherwise (Fail)
-    return result.returncode == 0, full_output
+    return result.returncode == 0, result.stdout + result.stderr
 
 def read_file(filepath):
-    """Reads the content of a code file."""
     if not os.path.exists(filepath):
         return None
     with open(filepath, 'r') as f:
         return f.read()
 
 def write_file(filepath, content):
-    """Overwrites a file with new content."""
     with open(filepath, 'w') as f:
         f.write(content)
 
-def get_ai_fix(error_log, source_code, test_code):
-    """
-    Sends the error and code to the LLM to generate a fix.
-    """
+# --- UPDATED: Accepts 'past_fix' argument ---
+def get_ai_fix(error_log, source_code, test_code, past_fix=None):
     print("🧠 Consulting Gemini 1.5 Flash for a fix...")
     
+    # Inject Memory Hint if available
+    memory_context = ""
+    if past_fix:
+        print("💡 Injecting past solution into Prompt...")
+        memory_context = f"""
+        --- 💡 MEMORY HINT (A similar bug was fixed this way before) ---
+        {past_fix}
+        ---------------------------------------------------------------
+        Use the logic above if it applies to this error.
+        """
+
     prompt = f"""
     You are an expert Python QA Engineer.
     
-    I have a unit test that is failing. Your goal is to fix the TEST CODE so it matches the SOURCE CODE logic.
+    {memory_context}
     
     --- ERROR LOG ---
     {error_log}
     
-    --- SOURCE CODE (The Source of Truth) ---
+    --- SOURCE CODE ---
     {source_code}
     
     --- BROKEN TEST CODE ---
@@ -73,20 +76,14 @@ def get_ai_fix(error_log, source_code, test_code):
     2. Rewrite the FULL content of the test file to fix the error.
     3. Return ONLY the python code. 
     4. Do NOT use Markdown formatting (no ```python blocks). 
-    5. Do NOT include any explanation text. Just the code.
     """
     
     try:
-        # CHANGED: Call Gemini's generate_content method
         response = model.generate_content(prompt)
-        
-        # Clean up the response (Gemini often adds markdown)
         fixed_code = response.text
         fixed_code = re.sub(r"^```python", "", fixed_code, flags=re.MULTILINE)
         fixed_code = re.sub(r"^```", "", fixed_code, flags=re.MULTILINE)
-        
         return fixed_code.strip()
-        
     except Exception as e:
         print(f"❌ Error calling AI: {e}")
         return None
@@ -103,8 +100,7 @@ def trigger_healing_process(test_file, source_file):
         logs.append("✅ Tests Passed! No healing needed.")
         return {"status": "success", "logs": logs}
     
-    logs.append("❌ Failure Detected!")
-    logs.append("📄 Capturing Error Stack Trace...")
+    logs.append("❌ Failure Detected! Capturing errors...")
     
     # Step 2: Read Context
     source_code = read_file(source_file)
@@ -113,31 +109,43 @@ def trigger_healing_process(test_file, source_file):
     if not source_code or not test_code:
         logs.append("⚠️ Error: Could not find source files.")
         return {"status": "error", "logs": logs}
+
+    # --- NEW: Step 3 - Check Memory (RAG) ---
+    past_fix = None
+    if memory_bank:
+        logs.append("🧠 Checking Memory Bank for similar past bugs...")
+        past_fix = memory_bank.find_similar_fix(output)
+        if past_fix:
+            logs.append("💡 Memory Found! Using past solution as a guide.")
     
-    # Step 3: Get AI Fix
-    logs.append("🧠 Sending context to LLM...")
-    fixed_code = get_ai_fix(output, source_code, test_code)
+    # Step 4: Get AI Fix (Passing the memory hint)
+    logs.append("🧠 Sending context to Gemini...")
+    fixed_code = get_ai_fix(output, source_code, test_code, past_fix)
     
     if not fixed_code:
         logs.append("💀 AI failed to generate a fix.")
         return {"status": "error", "logs": logs}
         
-    # Step 4: Apply Fix
-    logs.append("🩹 AI generated a patch. Applying to file...")
+    # Step 5: Apply Fix
+    logs.append("🩹 Patching file with AI-generated code...")
     write_file(test_file, fixed_code)
     
-    # Step 5: Verify
-    logs.append("🔄 Re-running tests to verify fix...")
+    # Step 6: Verify
+    logs.append("🔄 Re-running tests verification...")
     success, new_output = run_tests(test_file)
     
     if success:
-        logs.append("✨ SUCCESS: The test is now passing!")
+        logs.append("✨ SUCCESS: Self-Healing Complete!")
+        
+        # --- NEW: Save Success to Memory ---
+        if memory_bank:
+            logs.append("💾 Saving this solution to Long-Term Memory...")
+            memory_bank.add_fix(output, fixed_code)
+            
         return {"status": "healed", "logs": logs}
     else:
-        logs.append("⚠️ The fix didn't work. Manual intervention required.")
+        logs.append("⚠️ Fix failed. Manual intervention needed.")
         return {"status": "failed", "logs": logs}
 
-# For manual testing
 if __name__ == "__main__":
-    # Change these paths to test manually
     trigger_healing_process("tests/test_calculator.py", "src/calculator.py")
