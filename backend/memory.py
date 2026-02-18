@@ -2,73 +2,72 @@ import faiss
 import numpy as np
 import json
 import os
-from sentence_transformers import SentenceTransformer
+import google.generativeai as genai # <--- FIXED IMPORT
+from config import GOOGLE_API_KEY, MEMORY_JSON, MEMORY_INDEX, EMBEDDING_MODEL
 
-# 1. Initialize the Model (Turns text into 384-dimension vectors)
-model = SentenceTransformer('all-MiniLM-L6-v2')
-
-# File to store the actual text data (FAISS only stores vectors)
-DB_FILE = "fix_history.json"
-INDEX_FILE = "faiss_index.bin"
-
-class HealerMemory:
+class RecallEngine:
     def __init__(self):
-        self.documents = []  # Stores: {"error": "...", "fix": "..."}
-        self.index = None
-        self.load_memory()
-
-    def load_memory(self):
-        """Loads existing memory from files."""
-        if os.path.exists(DB_FILE):
-            with open(DB_FILE, 'r') as f:
-                self.documents = json.load(f)
+        # Configure the standard library
+        genai.configure(api_key=GOOGLE_API_KEY)
+        self.dimension = 768  # Standard dimension for text-embedding-004
+        self.fixes = [] 
         
-        if os.path.exists(INDEX_FILE):
-            self.index = faiss.read_index(INDEX_FILE)
+        # Load existing memory if available
+        if os.path.exists(MEMORY_INDEX) and os.path.exists(MEMORY_JSON):
+            self.index = faiss.read_index(MEMORY_INDEX)
+            with open(MEMORY_JSON, 'r') as f:
+                self.fixes = json.load(f)
         else:
-            # Create a new FAISS index (Dimension 384 for MiniLM)
-            self.index = faiss.IndexFlatL2(384)
+            self.index = faiss.IndexFlatL2(self.dimension)
+    
+    def _get_embedding(self, text):
+        """Converts text (Error Log) into a Vector."""
+        try:
+            # Standard Library Embedding Call
+            result = genai.embed_content(
+                model=EMBEDDING_MODEL,
+                content=text,
+                task_type="retrieval_query"
+            )
+            # Extract embedding from dictionary
+            return np.array(result['embedding'], dtype='float32').reshape(1, -1)
+        except Exception as e:
+            print(f"⚠️ Embedding Error: {e}")
+            # Return zero vector on failure to prevent crash
+            return np.zeros((1, self.dimension), dtype='float32')
 
-    def save_memory(self):
-        """Saves memory to disk."""
-        with open(DB_FILE, 'w') as f:
-            json.dump(self.documents, f)
-        faiss.write_index(self.index, INDEX_FILE)
-
-    def add_fix(self, error_msg, fixed_code):
+    def retrieve(self, error_log):
         """
-        Learns from a success! Adds the error & fix to memory.
-        """
-        # 1. Convert error text to vector
-        vector = model.encode([error_msg])
-        
-        # 2. Add to FAISS index
-        self.index.add(np.array(vector, dtype=np.float32))
-        
-        # 3. Store the text data
-        self.documents.append({"error": error_msg, "fix": fixed_code})
-        self.save_memory()
-        print(f"🧠 Memory Updated: Stored fix for '{error_msg[:30]}...'")
-
-    def find_similar_fix(self, current_error):
-        """
-        Searches memory for a similar past error.
-        Returns the code fix if found, else None.
+        The 'Recall' Step: Finds the most similar past fix.
         """
         if self.index.ntotal == 0:
             return None
 
-        # 1. Search FAISS for the closest vector
-        query_vector = model.encode([current_error])
-        distances, indices = self.index.search(np.array(query_vector, dtype=np.float32), 1)
+        query_vector = self._get_embedding(error_log)
+        distances, indices = self.index.search(query_vector, k=1)
         
-        best_match_index = indices[0][0]
+        best_idx = indices[0][0]
         distance = distances[0][0]
-
-        # 2. Threshold (If distance is too high, it's not relevant)
-        if distance < 1.0 and best_match_index != -1:
-            match = self.documents[best_match_index]
-            print(f"💡 Recall: Found a similar fix from the past! (Dist: {distance:.2f})")
-            return match['fix']
+        
+        # Threshold: If distance is too high (low similarity), ignore it.
+        if best_idx != -1 and distance < 0.5: 
+            return self.fixes[best_idx]['fix']
         
         return None
+
+    def memorize(self, error_log, fixed_code):
+        """
+        The 'Learning' Step: Saves a successful fix to FAISS.
+        """
+        vector = self._get_embedding(error_log)
+        self.index.add(vector)
+        
+        self.fixes.append({
+            "error": error_log, 
+            "fix": fixed_code
+        })
+        
+        # Save to Disk (Persistence)
+        faiss.write_index(self.index, MEMORY_INDEX)
+        with open(MEMORY_JSON, 'w') as f:
+            json.dump(self.fixes, f, indent=2)

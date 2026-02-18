@@ -1,49 +1,56 @@
-# backend/test_memory.py
-from memory import HealerMemory
 import os
+import time
+# The import line below works now because we fixed memory.py
+from memory import RecallEngine 
 
-def test_memory_system():
-    print("🧠 Initializing Memory Bank...")
+def test_brain():
+    print("🧠 Initializing Recall Engine (FAISS + Gemini)...")
     
-    # 1. Initialize
     try:
-        mem = HealerMemory()
+        # Initialize the engine
+        brain = RecallEngine()
     except Exception as e:
-        print(f"❌ Failed to initialize memory: {e}")
+        print(f"❌ Failed to start engine. Check your API Key in .env! Error: {e}")
         return
 
-    # 2. Add a Dummy Entry (Simulating a past fix)
-    test_error = "ZeroDivisionError: division by zero"
-    test_fix = """
+    # --- TEST DATA ---
+    fake_error = "ZeroDivisionError: division by zero"
+    fake_fix = """
     def divide(a, b):
-        if b == 0: return 0
+        if b == 0: return 0  # Safe division
         return a / b
     """
-    
-    print(f"📝 Learning a new fix for: '{test_error}'...")
-    mem.add_fix(test_error, test_fix)
 
-    # 3. Search for it (using slightly different wording to test AI search)
-    # Note: We search for "dividing by 0" instead of "division by zero" to test similarity.
-    query = "Error: dividing by 0 detected"
-    print(f"🔍 Searching memory for a similar issue: '{query}'...")
+    print(f"\n📝 LEARNING STEP:")
+    print(f"   Feeding error: '{fake_error}'")
     
-    found_fix = mem.find_similar_fix(query)
+    # 1. Memorize
+    brain.memorize(fake_error, fake_fix)
+    print("   ✅ Saved to Long-Term Memory (FAISS).")
 
-    # 4. Verify Result
-    if found_fix:
-        print("\n✅ SUCCESS! Memory retrieval is working.")
-        print("-" * 30)
-        print(f"💡 Retrieved Fix:\n{found_fix.strip()}")
-        print("-" * 30)
-        
-        # Check if files were created
-        if os.path.exists("fix_history.json") and os.path.exists("faiss_index.bin"):
-            print("📂 Database files (json/bin) were created successfully.")
+    # Wait a moment to ensure file I/O is done
+    time.sleep(1)
+
+    # --- RETRIEVAL TEST ---
+    query = "Error: integer division or modulo by zero"
+    
+    print(f"\n🔍 RECALL STEP:")
+    print(f"   Asking about similar error: '{query}'")
+    
+    # 2. Retrieve
+    retrieved_fix = brain.retrieve(query)
+
+    print("-" * 40)
+    if retrieved_fix:
+        if "Safe division" in retrieved_fix:
+            print("✨ SUCCESS! The bot remembered the fix.")
+            print(f"\n📄 Retrieved Code:\n{retrieved_fix}")
         else:
-            print("⚠️ Warning: Database files not found on disk.")
+            print("⚠️ retrieved data, but it didn't match the expected fix.")
+            print(f"Got: {retrieved_fix}")
     else:
-        print("\n❌ FAILED. The system could not recall the fix.")
+        print("❌ FAILED. The bot returned None.")
+    print("-" * 40)
 
 if __name__ == "__main__":
-    test_memory_system()
+    test_brain()
