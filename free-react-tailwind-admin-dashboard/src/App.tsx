@@ -1,3 +1,4 @@
+import CodeOptimizer from './pages/Dashboard/CodeOptimizer';
 import { BrowserRouter as Router, Routes, Route } from "react-router";
 import SignIn from "./pages/AuthPages/SignIn";
 import SignUp from "./pages/AuthPages/SignUp";
@@ -28,6 +29,9 @@ export default function App() {
           {/* Dashboard Layout */}
           <Route element={<AppLayout />}>
             <Route index path="/" element={<Home />} />
+            
+            {/* ADDED: Code Optimizer Route */}
+            <Route path="/optimizer" element={<CodeOptimizer />} />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />
