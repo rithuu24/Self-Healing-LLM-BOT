@@ -1,10 +1,16 @@
+import React, { ReactNode } from "react";
 import { SidebarProvider, useSidebar } from "../context/SidebarContext";
 import { Outlet } from "react-router";
 import AppHeader from "./AppHeader";
 import Backdrop from "./Backdrop";
 import AppSidebar from "./AppSidebar";
 
-const LayoutContent: React.FC = () => {
+// 1. Define the props interface to accept 'children'
+interface LayoutProps {
+  children?: ReactNode;
+}
+
+const LayoutContent: React.FC<LayoutProps> = ({ children }) => {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
 
   return (
@@ -20,17 +26,20 @@ const LayoutContent: React.FC = () => {
       >
         <AppHeader />
         <div className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">
-          <Outlet />
+          {/* 2. Logic: If children exist (Wrapper mode), show them. 
+              Otherwise show Outlet (Router mode). */}
+          {children ? children : <Outlet />}
         </div>
       </div>
     </div>
   );
 };
 
-const AppLayout: React.FC = () => {
+// 3. Update AppLayout to accept and pass down children
+const AppLayout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <SidebarProvider>
-      <LayoutContent />
+      <LayoutContent>{children}</LayoutContent>
     </SidebarProvider>
   );
 };
