@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation } from "react-router-dom";
 
 // Assume these icons are imported from an icon library
 import {
@@ -40,6 +40,25 @@ const navItems: NavItem[] = [
     icon: <UserCircleIcon />,
     name: "User Profile",
     path: "/profile",
+  },
+  {
+    icon: (
+      <svg
+        className="fill-current"
+        width="18"
+        height="18"
+        viewBox="0 0 18 18"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M10.5 1.5L2.25 10.5H8.25L7.5 16.5L15.75 7.5H9.75L10.5 1.5Z"
+          fill="currentColor"
+        />
+      </svg>
+    ),
+    name: "Code Optimizer",
+    path: "/optimizer",
   },
   {
     name: "Forms",
@@ -105,7 +124,6 @@ const AppSidebar: React.FC = () => {
   );
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // const isActive = (path: string) => location.pathname === path;
   const isActive = useCallback(
     (path: string) => location.pathname === path,
     [location.pathname]
@@ -253,9 +271,9 @@ const AppSidebar: React.FC = () => {
                           <span
                             className={`ml-auto ${
                               isActive(subItem.path)
-                                ? "menu-dropdown-badge-active"
-                                : "menu-dropdown-badge-inactive"
-                            } menu-dropdown-badge`}
+                                ? "menu-dropdown-item-badge-active"
+                                : "menu-dropdown-item-badge-inactive"
+                            } menu-dropdown-item-badge`}
                           >
                             new
                           </span>
@@ -264,9 +282,9 @@ const AppSidebar: React.FC = () => {
                           <span
                             className={`ml-auto ${
                               isActive(subItem.path)
-                                ? "menu-dropdown-badge-active"
-                                : "menu-dropdown-badge-inactive"
-                            } menu-dropdown-badge`}
+                                ? "menu-dropdown-item-badge-active"
+                                : "menu-dropdown-item-badge-inactive"
+                            } menu-dropdown-item-badge`}
                           >
                             pro
                           </span>

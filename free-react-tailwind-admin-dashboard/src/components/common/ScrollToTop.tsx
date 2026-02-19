@@ -1,16 +1,18 @@
 import { useEffect } from "react";
-import { useLocation } from "react-router";
+import { useLocation } from "react-router-dom";
 
-export function ScrollToTop() {
+const ScrollToTop = () => {
+  // Access the current location (URL path)
   const { pathname } = useLocation();
 
   useEffect(() => {
-    window.scrollTo({
-      top: 0,
-      left: 0,
-      behavior: "smooth",
-    });
+    // Whenever the pathname changes (user navigates), 
+    // scroll the window to the very top immediately.
+    window.scrollTo(0, 0);
   }, [pathname]);
 
+  // This component doesn't render anything visually
   return null;
-}
+};
+
+export default ScrollToTop; 
