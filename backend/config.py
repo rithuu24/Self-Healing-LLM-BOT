@@ -10,7 +10,7 @@ if not GOOGLE_API_KEY:
     raise ValueError("❌ CRITICAL ERROR: GOOGLE_API_KEY is missing from .env file!")
 
 # Model Settings
-MODEL_NAME = "gemini-1.5-flash"  # Fast & Efficient
+MODEL_NAME = "models/gemini-2.5-flash" # Fast & Efficient
 EMBEDDING_MODEL = "models/text-embedding-004" # For Vector Memory
 
 # File Paths
