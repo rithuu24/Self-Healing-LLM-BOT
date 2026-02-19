@@ -11,7 +11,7 @@ if not GOOGLE_API_KEY:
 
 # Model Settings
 MODEL_NAME = "models/gemini-2.5-flash" # Fast & Efficient
-EMBEDDING_MODEL = "models/text-embedding-004" # For Vector Memory
+EMBEDDING_MODEL = "models/text-embedding-001" # For Vector Memory
 
 # File Paths
 MEMORY_JSON = "fix_history.json"

@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from healer import trigger_marr_loop
 from config import TEST_FILE
+from optimizer import optimize_code
 import os
 import json
 
@@ -42,3 +44,25 @@ def test_add():
     """
     with open(TEST_FILE, "w") as f: f.write(broken_code)
     return {"status": "reset"}
+# --- OPTIMIZER ENDPOINT ---
+class OptimizeRequest(BaseModel):
+    code: str
+
+@app.post("/optimize")
+async def optimize_endpoint(req: OptimizeRequest):
+    print("🚀 Received code for optimization...")
+    
+    result = optimize_code(req.code)
+    
+    if "error" in result:
+        return {"status": "error", "message": result["error"]}
+        
+    return {
+        "status": "success",
+        "current_time": result["current_time"],
+        "current_space": result["current_space"],
+        "optimized_time": result["optimized_time"],
+        "optimized_space": result["optimized_space"],
+        "explanation": result["explanation"],
+        "optimized_code": result["optimized_code"]
+    }
