@@ -1,8 +1,9 @@
 import time
 import os
+import asyncio
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from healer import trigger_marr_loop
+from healer import stream_marr_loop  # <--- Using the live streaming loop now!
 from config import TEST_FILE, SOURCE_FILE
 
 class AutoHealHandler(FileSystemEventHandler):
@@ -14,26 +15,30 @@ class AutoHealHandler(FileSystemEventHandler):
         if os.path.abspath(event.src_path) == os.path.abspath(TEST_FILE):
             
             # Debounce: VS Code sometimes triggers multiple 'save' events at once. 
-            # This ensures we only run the healer once per save.
             current_time = time.time()
             if current_time - self.last_triggered > 2:
                 self.last_triggered = current_time
                 
                 print(f"\n👀 Change detected in {os.path.basename(TEST_FILE)}...")
-                print("🛡️ Analyzing code integrity...")
+                print("🛡️ Analyzing code integrity...\n")
                 
-                # Trigger the exact same pipeline the frontend uses
-                result = trigger_marr_loop(TEST_FILE, SOURCE_FILE)
+                # Run the live stream generator in the terminal
+                asyncio.run(self.process_live_stream())
                 
-                if result["status"] == "healed":
-                    print("✨ AUTO-HEAL COMPLETE: The file has been fixed. Check VS Code!")
-                elif result["status"] == "success":
-                    print("✅ Code is healthy. No action needed.")
-                else:
-                    print("💀 Auto-Heal failed to fix the issue.")
-                
-                print("-" * 50)
+                print("\n" + "-" * 50)
                 print("🛡️ Guardian Active. Watching for next save...")
+
+    async def process_live_stream(self):
+        """
+        Consumes the AI's live stream and prints it to the terminal exactly
+        like the React dashboard does.
+        """
+        async for log_chunk in stream_marr_loop(TEST_FILE, SOURCE_FILE):
+            if log_chunk.strip() == "DONE":
+                break
+            
+            # Print without extra newlines, since the chunks already have \n
+            print(f"  🤖 {log_chunk}", end="", flush=True)
 
 def start_watcher():
     watch_dir = os.path.dirname(os.path.abspath(TEST_FILE))
@@ -52,7 +57,7 @@ def start_watcher():
     print("=" * 50)
     print(f"🛡️  GUARDIAN ONLINE  🛡️")
     print(f"Watching: {TEST_FILE}")
-    print("Press 'Ctrl + S' in VS Code to trigger auto-healing.")
+    print("Press 'Ctrl + S' in VS Code to trigger live auto-healing.")
     print("=" * 50)
     
     observer.start()

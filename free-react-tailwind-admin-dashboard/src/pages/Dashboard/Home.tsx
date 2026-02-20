@@ -1,201 +1,214 @@
-import React, { useState, useRef, useEffect } from 'react';
-import axios from 'axios';
-// FIXED: Import AppLayout only once
-import AppLayout from '../../layout/AppLayout';
-// FIXED: Removed .tsx extension from the import path
-import Breadcrumb from '../../components/Breadcrumbs/Breadcrumbs'; 
+import React, { useState, useEffect, useRef } from 'react';
 
-// --- Card Component for Stats ---
-const CardDataStats: React.FC<{
-  title: string;
-  total: string;
-  rate: string;
-  levelUp?: boolean;
-  levelDown?: boolean;
-  children: React.ReactNode;
-}> = ({ title, total, rate, levelUp, levelDown, children }) => {
-  return (
-    <div className="rounded-sm border border-stroke bg-white py-6 px-7.5 shadow-default dark:border-strokedark dark:bg-boxdark">
-      <div className="flex h-11.5 w-11.5 items-center justify-center rounded-full bg-meta-2 dark:bg-meta-4">
-        {children}
-      </div>
-
-      <div className="mt-4 flex items-end justify-between">
-        <div>
-          <h4 className="text-title-md font-bold text-black dark:text-white">
-            {total}
-          </h4>
-          <span className="text-sm font-medium">{title}</span>
-        </div>
-
-        <span className={`flex items-center gap-1 text-sm font-medium ${
-          levelUp ? 'text-meta-3' : levelDown ? 'text-meta-1' : ''
-        }`}>
-          {rate}
-          {levelUp && (
-            <svg className="fill-meta-3" width="10" height="11" viewBox="0 0 10 11" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4.35716 2.47737L0.908974 5.82987L5.0443e-07 4.94612L5 0.0848689L10 4.94612L9.09103 5.82987L5.64284 2.47737L5.64284 10.0849L4.35716 10.0849L4.35716 2.47737Z" fill=""/>
-            </svg>
-          )}
-          {levelDown && (
-            <svg className="fill-meta-1" width="10" height="11" viewBox="0 0 10 11" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M5.64284 8.52263L9.09103 5.17013L10 6.05388L5 10.9151L-8.98482e-07 6.05388L0.908973 5.17013L4.35716 8.52263L4.35716 0.915131L5.64284 0.915131L5.64284 8.52263Z" fill=""/>
-            </svg>
-          )}
-        </span>
-      </div>
-    </div>
-  );
-};
-
-// --- MAIN DASHBOARD COMPONENT ---
 const Home: React.FC = () => {
-  const [logs, setLogs] = useState<string[]>(["System Ready. Waiting for command..."]);
-  const [loading, setLoading] = useState(false);
-  const [voiceEnabled, setVoiceEnabled] = useState(true);
-  const [stats, setStats] = useState({ total: 0, passed: 0, healed: 0, failed: 0 });
-  const terminalEndRef = useRef<HTMLDivElement>(null);
+  const [status, setStatus] = useState('Standby');
+  
+  // State to hold our terminal messages
+  const [logs, setLogs] = useState<string[]>([
+    `[${new Date().toLocaleTimeString()}] System Ready. Waiting for command...`
+  ]);
 
-  // --- 🗣️ VOICE ENGINE ---
-  const speak = (text: string) => {
-    if (!voiceEnabled || !('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    window.speechSynthesis.speak(utterance);
-  };
+  // Reference for auto-scrolling the terminal
+  const logsEndRef = useRef<HTMLDivElement>(null);
 
+  // Auto-scroll to bottom on new logs
   useEffect(() => {
-    terminalEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [logs]);
 
-  const runHealer = async () => {
-    setLoading(true);
-    setLogs(["🚀 Connecting to Python Brain...", "⏳ Waiting for AI Analysis..."]);
-    speak("Initiating diagnostics. Connecting to neural engine."); 
-    
-    try {
-        const response = await axios.get('http://127.0.0.1:8000/run-healer');
-        const newLogs = response.data.logs;
-        setLogs((prev) => [...prev, ...newLogs]);
+  const handleRunDiagnostics = async () => {
+    // Prevent double-clicking
+    if (status === 'Running...') return;
 
-        if (response.data.status === "healed") {
-            setStats(s => ({ ...s, healed: s.healed + 1, total: s.total + 1, passed: s.passed + 1 }));
-            speak("Fix applied successfully. Saving to long term memory.");
-        } else if (response.data.status === "success") {
-            setLogs(prev => [...prev, "✅ Code was already correct."]);
-            setStats(s => ({ ...s, total: s.total + 1, passed: s.passed + 1 }));
-            speak("System healthy. No errors detected.");
-        } else {
-             setStats(s => ({ ...s, failed: s.failed + 1, total: s.total + 1 }));
-             speak("Critical failure. AI could not generate a fix.");
+    setStatus('Running...');
+    setLogs(prev => [
+      ...prev, 
+      `\n--------------------------------------------------`,
+      `[${new Date().toLocaleTimeString()}] ⚡ Connecting to Live Python Backend...`
+    ]);
+
+    try {
+      // 1. Call the new Python Streaming API
+      const response = await fetch('http://127.0.0.1:8000/stream-diagnostics');
+      
+      if (!response.body) throw new Error("No response body");
+
+      // 2. Read the incoming stream chunk by chunk
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+
+      while (true) {
+        const { value, done } = await reader.read();
+        
+        if (done) break; // Stream finished
+        
+        // Decode the binary data to text
+        const chunk = decoder.decode(value, { stream: true }).trim();
+
+        // Sometimes data arrives in batches, so we split by newlines just in case
+        const lines = chunk.split('\n').filter(line => line.trim() !== '');
+
+        for (const line of lines) {
+          // If Python sends our secret "DONE" signal, stop the UI gracefully
+          if (line === "DONE") {
+            setStatus('Standby');
+            setLogs(prev => [
+              ...prev, 
+              `[${new Date().toLocaleTimeString()}] ✓ Diagnostics complete. Connection closed.`
+            ]);
+            return; // Exit the loop and function
+          } else {
+            // Add the live log to the terminal
+            setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${line}`]);
+          }
         }
-    } catch (error) {
-        const errMsg = "Error: Could not connect to Backend.";
-        setLogs((prev) => [...prev, "❌ " + errMsg]);
-        speak(errMsg);
-    }
-    setLoading(false);
-  };
+      }
+      
+      // Failsafe in case stream drops without sending "DONE"
+      if (status === 'Running...') setStatus('Standby');
 
-  const resetDemo = async () => {
-    setLoading(true);
-    setLogs(prev => [...prev, "🔄 Resetting Demo Environment...", "💥 Breaking code on purpose..."]);
-    speak("Resetting environment. Injecting bugs into the system.");
-    try {
-      await axios.get('http://127.0.0.1:8000/reset-demo');
-      setLogs((prev) => [...prev, "✅ Reset Complete. The bug is back!"]);
-      setStats({ total: 0, passed: 0, healed: 0, failed: 1 });
     } catch (error) {
-      setLogs((prev) => [...prev, "❌ Error resetting demo."]);
+      console.error("Backend connection failed:", error);
+      setStatus('Standby');
+      setLogs(prev => [
+        ...prev, 
+        `[${new Date().toLocaleTimeString()}] ERROR: Could not connect to Python backend. Is FastAPI running?`
+      ]);
     }
-    setLoading(false);
   };
 
   return (
-    // FIXED: Using AppLayout wrapper consistently
-    <AppLayout>
-      {/* FIXED: Breadcrumb usage */}
-      <Breadcrumb pageName="Auto-Healer Dashboard" />
-
-      {/* --- ACTION BAR --- */}
+    <>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-         <div>
-            <h2 className="text-title-md2 font-semibold text-black dark:text-white">
-               Status: {loading ? "Active Scan..." : "Standby"}
-            </h2>
-         </div>
-         <div className="flex gap-4 items-center">
-            {/* Voice Toggle */}
-            <div 
-               className="flex items-center gap-3 cursor-pointer" 
-               onClick={() => setVoiceEnabled(!voiceEnabled)}
-            >
-               <div className={`relative w-12 h-6 rounded-full transition ${voiceEnabled ? 'bg-primary' : 'bg-gray-400'}`}>
-                  <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition transform ${voiceEnabled ? 'translate-x-6' : ''}`}></div>
-               </div>
-               <span className="font-medium">Voice</span>
-            </div>
-
-            <button onClick={resetDemo} disabled={loading} className="inline-flex items-center justify-center rounded-md bg-meta-1 py-3 px-6 text-center font-medium text-white hover:bg-opacity-90 lg:px-8 xl:px-10">
-               Reset Demo
-            </button>
-            <button onClick={runHealer} disabled={loading} className={`inline-flex items-center justify-center rounded-md py-3 px-6 text-center font-medium text-white lg:px-8 xl:px-10 ${loading ? 'bg-gray-500 cursor-not-allowed' : 'bg-primary hover:bg-opacity-90 shadow-lg'}`}>
-               {loading ? 'Running...' : '▶ Run Diagnostics'}
-            </button>
-         </div>
+        <h2 className="text-title-md2 font-semibold text-black dark:text-white">
+          Auto-Healer Dashboard
+        </h2>
+        <nav>
+          <ol className="flex items-center gap-2">
+            <li>
+              <span className="font-medium">Dashboard /</span>
+            </li>
+            <li className="font-medium text-primary">Auto-Healer Dashboard</li>
+          </ol>
+        </nav>
       </div>
 
-      {/* --- STATS GRID --- */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
-        <CardDataStats title="Total Tests" total={stats.total.toString()} rate="100%" levelUp>
-            <svg className="fill-primary dark:fill-white" width="22" height="16" viewBox="0 0 22 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-               <path d="M11 0L0 6L11 12L22 6L11 0Z" />
-            </svg>
-        </CardDataStats>
-        <CardDataStats title="Passed" total={stats.passed.toString()} rate={`${stats.total > 0 ? ((stats.passed/stats.total)*100).toFixed(0) : 0}%`} levelUp>
-            <svg className="fill-meta-3" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-               <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-            </svg>
-        </CardDataStats>
-        <CardDataStats title="Auto-Healed" total={stats.healed.toString()} rate="Ai-Driven" levelUp>
-            <svg className="fill-primary" width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-1.34-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
-            </svg>
-        </CardDataStats>
-        <CardDataStats title="Failed" total={stats.failed.toString()} rate="Needs Attention" levelDown>
-             <svg className="fill-meta-1" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-             </svg>
-        </CardDataStats>
-      </div>
-
-      {/* --- TERMINAL --- */}
-      <div className="mt-4 md:mt-6 2xl:mt-7.5 rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
-        <div className="border-b border-stroke py-4 px-4 dark:border-strokedark mb-4">
-            <h4 className="text-xl font-semibold text-black dark:text-white">
-               Live Execution Logs
-            </h4>
+      {/* Header Controls */}
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h4 className="text-title-sm font-semibold text-black dark:text-white">
+            Status: <span className={status === 'Running...' ? 'text-meta-3 animate-pulse' : 'text-primary'}>{status}</span>
+          </h4>
         </div>
         
-        <div className="h-[400px] overflow-y-auto rounded-lg bg-[#1e1e1e] p-6 font-mono text-sm text-gray-300 shadow-inner custom-scrollbar">
-             {logs.map((log, index) => (
-                <div key={index} className="mb-2 flex items-start">
-                   <span className="mr-3 text-gray-500 shrink-0 select-none">[{new Date().toLocaleTimeString()}]</span>
-                   <span className={`${
-                      log.includes("FAILURE") || log.includes("Error") ? "text-meta-1 font-bold" : 
-                      log.includes("SUCCESS") || log.includes("Passed") ? "text-meta-3 font-bold" : 
-                      log.includes("Heal") || log.includes("Memory") ? "text-primary font-bold" : 
-                      "text-white"
-                   }`}>
-                      {log}
-                   </span>
-                </div>
-             ))}
-             <div ref={terminalEndRef} />
-             {loading && <span className="animate-pulse text-meta-3">_</span>}
+        <div className="flex items-center gap-4">
+          <label className="flex cursor-pointer select-none items-center gap-2">
+            <div className="relative">
+              <input type="checkbox" className="sr-only" />
+              <div className="block h-6 w-10 rounded-full bg-stroke dark:bg-strokedark"></div>
+              <div className="dot absolute left-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-white transition"></div>
+            </div>
+            <span className="font-medium text-black dark:text-white">Voice</span>
+          </label>
+
+          <button 
+            onClick={() => setLogs([`[${new Date().toLocaleTimeString()}] Logs cleared. System Ready.`])}
+            className="rounded-md bg-gray-100 px-6 py-2 font-medium text-gray-500 hover:bg-gray-200 dark:bg-meta-4 dark:text-gray-300 dark:hover:bg-meta-3 transition-colors"
+          >
+            Clear Logs
+          </button>
+
+          <button 
+            onClick={handleRunDiagnostics}
+            disabled={status === 'Running...'}
+            className={`flex items-center gap-2 rounded-md px-6 py-2 font-medium transition-colors ${
+              status === 'Running...' 
+                ? 'bg-gray-500 text-white cursor-not-allowed' 
+                : 'bg-primary text-white hover:bg-opacity-90'
+            }`}
+          >
+            <svg
+              className={`fill-current ${status === 'Running...' ? 'animate-spin' : ''}`}
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12.5522 7.10427L4.40905 2.01526C3.76618 1.61338 2.91669 2.07542 2.91669 2.83151V13.1685C2.91669 13.9246 3.76618 14.3866 4.40905 13.9847L12.5522 8.89573C13.1493 8.52256 13.1493 7.47744 12.5522 7.10427Z"
+                fill="currentColor"
+              />
+            </svg>
+            {status === 'Running...' ? 'Diagnosing...' : 'Run Diagnostics'}
+          </button>
         </div>
       </div>
-    </AppLayout>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
+        <div className="rounded-sm border border-stroke bg-white px-7.5 py-6 shadow-default dark:border-strokedark dark:bg-boxdark">
+          <div className="mt-4 flex items-end justify-between">
+            <div>
+              <h4 className="text-title-xl font-bold text-black dark:text-white">24</h4>
+              <span className="text-sm font-medium">Total Tests</span>
+            </div>
+            <span className="flex items-center gap-1 text-sm font-medium">100%</span>
+          </div>
+        </div>
+
+        <div className="rounded-sm border border-stroke bg-white px-7.5 py-6 shadow-default dark:border-strokedark dark:bg-boxdark">
+          <div className="mt-4 flex items-end justify-between">
+            <div>
+              <h4 className="text-title-xl font-bold text-black dark:text-white">23</h4>
+              <span className="text-sm font-medium">Passed</span>
+            </div>
+            <span className="flex items-center gap-1 text-sm font-medium text-meta-5">95%</span>
+          </div>
+        </div>
+
+        <div className="rounded-sm border border-stroke bg-white px-7.5 py-6 shadow-default dark:border-strokedark dark:bg-boxdark">
+          <div className="mt-4 flex items-end justify-between">
+            <div>
+              <h4 className="text-title-xl font-bold text-black dark:text-white">1</h4>
+              <span className="text-sm font-medium">Auto-Healed</span>
+            </div>
+            <span className="flex items-center gap-1 text-sm font-medium text-meta-3">Ai-Driven</span>
+          </div>
+        </div>
+
+        <div className="rounded-sm border border-stroke bg-white px-7.5 py-6 shadow-default dark:border-strokedark dark:bg-boxdark">
+          <div className="mt-4 flex items-end justify-between">
+            <div>
+              <h4 className="text-title-xl font-bold text-black dark:text-white">0</h4>
+              <span className="text-sm font-medium">Failed</span>
+            </div>
+            <span className="flex items-center gap-1 text-sm font-medium text-meta-1">Needs Attention</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Live Execution Logs */}
+      <div className="mt-4 md:mt-6 2xl:mt-7.5">
+        <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark p-6">
+          <h4 className="mb-6 text-xl font-semibold text-black dark:text-white">
+            Live Execution Logs
+          </h4>
+          <div className="bg-[#1e1e1e] rounded-md p-5 h-[300px] font-mono text-sm text-gray-300 overflow-y-auto custom-scrollbar">
+            {logs.map((log, index) => (
+              <p 
+                key={index} 
+                className={`whitespace-pre-wrap ${log.includes('WARNING') || log.includes('ERROR') ? 'text-meta-1' : log.includes('✓') ? 'text-meta-3' : ''}`}
+              >
+                {log}
+              </p>
+            ))}
+            {/* Anchor for auto-scroll */}
+            <div ref={logsEndRef} />
+          </div>
+        </div>
+      </div>
+    </>
   );
 };
 

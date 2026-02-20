@@ -54,7 +54,7 @@ const CodeOptimizer: React.FC = () => {
               <button 
                 onClick={handleOptimize}
                 disabled={loading}
-                className={`inline-flex items-center justify-center rounded-md px-6 py-2 text-center font-medium text-white hover:bg-opacity-90 ${loading ? 'bg-gray-500' : 'bg-primary'}`}
+                className={`inline-flex items-center justify-center rounded-md px-6 py-2 text-center font-medium text-white transition-colors ${loading ? 'bg-gray-500 cursor-not-allowed' : 'bg-primary hover:bg-opacity-90'}`}
               >
                 {loading ? 'Analyzing...' : '⚡ Optimize Code'}
               </button>
@@ -82,7 +82,7 @@ const CodeOptimizer: React.FC = () => {
               </label>
             </div>
             <div className="p-6.5">
-              {error && <div className="text-meta-1 mb-4">{error}</div>}
+              {error && <div className="text-meta-1 mb-4 font-medium">{error}</div>}
               
               {!result && !error && !loading && (
                 <div className="flex h-[350px] items-center justify-center text-gray-500">
@@ -91,7 +91,7 @@ const CodeOptimizer: React.FC = () => {
               )}
 
               {loading && (
-                <div className="flex h-[350px] items-center justify-center text-primary animate-pulse">
+                <div className="flex h-[350px] items-center justify-center text-primary animate-pulse font-medium">
                   Running Deep Logic Analysis...
                 </div>
               )}
@@ -102,8 +102,8 @@ const CodeOptimizer: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4">
                      <div className="rounded border border-stroke p-3 dark:border-strokedark bg-meta-1 bg-opacity-10">
                         <span className="block text-xs font-medium text-meta-1 mb-1">Current Complexity</span>
-                        <div className="text-sm">⏰ {result.current_time}</div>
-                        <div className="text-sm">💾 {result.current_space}</div>
+                        <div className="text-sm font-medium">⏰ {result.current_time}</div>
+                        <div className="text-sm font-medium">💾 {result.current_space}</div>
                      </div>
                      <div className="rounded border border-stroke p-3 dark:border-strokedark bg-meta-3 bg-opacity-10">
                         <span className="block text-xs font-medium text-meta-3 mb-1">Optimized Complexity</span>

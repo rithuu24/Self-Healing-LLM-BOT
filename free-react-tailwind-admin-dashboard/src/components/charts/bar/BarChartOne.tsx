@@ -1,97 +1,42 @@
-import Chart from "react-apexcharts";
-import { ApexOptions } from "apexcharts";
+import React from "react";
 
-export default function BarChartOne() {
-  const options: ApexOptions = {
-    colors: ["#465fff"],
-    chart: {
-      fontFamily: "Outfit, sans-serif",
-      type: "bar",
-      height: 180,
-      toolbar: {
-        show: false,
-      },
-    },
-    plotOptions: {
-      bar: {
-        horizontal: false,
-        columnWidth: "39%",
-        borderRadius: 5,
-        borderRadiusApplication: "end",
-      },
-    },
-    dataLabels: {
-      enabled: false,
-    },
-    stroke: {
-      show: true,
-      width: 4,
-      colors: ["transparent"],
-    },
-    xaxis: {
-      categories: [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-      ],
-      axisBorder: {
-        show: false,
-      },
-      axisTicks: {
-        show: false,
-      },
-    },
-    legend: {
-      show: true,
-      position: "top",
-      horizontalAlign: "left",
-      fontFamily: "Outfit",
-    },
-    yaxis: {
-      title: {
-        text: undefined,
-      },
-    },
-    grid: {
-      yaxis: {
-        lines: {
-          show: true,
-        },
-      },
-    },
-    fill: {
-      opacity: 1,
-    },
-
-    tooltip: {
-      x: {
-        show: false,
-      },
-      y: {
-        formatter: (val: number) => `${val}`,
-      },
-    },
-  };
-  const series = [
-    {
-      name: "Sales",
-      data: [168, 385, 201, 298, 187, 195, 291, 110, 215, 390, 280, 112],
-    },
-  ];
+const LineChart: React.FC = () => {
   return (
-    <div className="max-w-full overflow-x-auto custom-scrollbar">
-      <div id="chartOne" className="min-w-[1000px]">
-        <Chart options={options} series={series} type="bar" height={180} />
+    <>
+      {/* Inline Breadcrumb - Guaranteed to work without imports! */}
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-title-md2 font-semibold text-black dark:text-white">
+          Line Chart
+        </h2>
+        <nav>
+          <ol className="flex items-center gap-2">
+            <li>
+              <span className="font-medium">Dashboard /</span>
+            </li>
+            <li className="font-medium text-primary">Line Chart</li>
+          </ol>
+        </nav>
       </div>
-    </div>
+
+      <div className="grid grid-cols-1 gap-4 md:gap-6 2xl:gap-7.5">
+        <div className="rounded-sm border border-stroke bg-white px-5 pb-5 pt-7.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
+          <div className="mb-3 justify-between gap-4 sm:flex">
+            <div>
+              <h4 className="text-xl font-semibold text-black dark:text-white">
+                Revenue Analytics
+              </h4>
+            </div>
+          </div>
+          
+          <div className="flex h-[350px] items-center justify-center rounded-md bg-gray-50 dark:bg-meta-4">
+            <span className="font-medium text-gray-500 dark:text-gray-400">
+              [ Line Chart Canvas ]
+            </span>
+          </div>
+        </div>
+      </div>
+    </>
   );
-}
+};
+
+export default LineChart;

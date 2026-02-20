@@ -1,3 +1,4 @@
+import asyncio
 import subprocess
 import os
 import re
@@ -14,7 +15,6 @@ def run_observer(test_path):
     """
     The OBSERVER Engine: Runs tests and captures raw output.
     """
-    print(f"👀 Observer: Monitoring {test_path}...")
     result = subprocess.run(
         ["pytest", test_path],
         capture_output=True,
@@ -26,11 +26,8 @@ def reasoning_engine(error_log, source_code, test_code, context=None):
     """
     The REASONING Engine: Uses Gemini to generate a patch.
     """
-    print("🧠 Reasoning: Analyzing failure patterns...")
-    
     memory_prompt = ""
     if context:
-        print("💡 Memory Recall: Found a similar past solution!")
         memory_prompt = f"""
         --- 🧠 MEMORY RETRIEVAL (A similar bug was fixed this way) ---
         {context}
@@ -69,59 +66,88 @@ def reasoning_engine(error_log, source_code, test_code, context=None):
         code = re.sub(r"^```", "", code, flags=re.MULTILINE)
         return code.strip()
     except Exception as e:
-        print(f"❌ Gemini API Error: {e}")
         return f"API Error: {str(e)}"
 
 def trigger_marr_loop(test_path=TEST_FILE, source_path=SOURCE_FILE):
     """
-    The Main MARR Loop (Observer -> Recall -> Reasoning -> Reflexion)
+    The Original MARR Loop (Used for standard API requests)
     """
-    logs = []
+    # ... (Your existing trigger_marr_loop code remains unchanged here)
+    pass
+
+async def stream_marr_loop(test_path=TEST_FILE, source_path=SOURCE_FILE):
+    """
+    The LIVE MARR Loop (Streams text directly to the React Terminal)
+    """
+    yield "Initializing Self-Healing MARR Loop...\n"
+    await asyncio.sleep(0.5) # Slight pause for UI effect
+    
     attempt = 0
     
     # 1. Observer Step
+    yield f"👀 Observer: Monitoring {test_path}...\n"
+    await asyncio.sleep(0.5)
     success, output = run_observer(test_path)
-    if success:
-        return {"status": "success", "logs": ["✅ System Healthy. No repairs needed."]}
     
-    logs.append(f"❌ Failure Detected. Entering Repair Loop...")
+    if success:
+        yield "✅ System Healthy. No repairs needed.\n"
+        yield "DONE\n" # Signal React to stop listening
+        return
+    
+    yield "❌ Failure Detected. Entering Repair Loop...\n"
 
     # Read Files
     if not os.path.exists(source_path) or not os.path.exists(test_path):
-        return {"status": "error", "logs": ["❌ Error: Source or Test file not found."]}
+        yield "❌ Error: Source or Test file not found.\n"
+        yield "DONE\n"
+        return
 
     with open(source_path, 'r') as f: source_code = f.read()
     with open(test_path, 'r') as f: test_code = f.read()
 
     # 2. Recall Step
+    yield "🧠 Memory Engine: Searching for past solutions...\n"
     past_fix = memory.retrieve(output)
     
+    if past_fix:
+        yield "💡 Memory Recall: Found a similar past solution!\n"
+        await asyncio.sleep(0.5)
+
     # 3. Reflexion Loop (Retry Logic)
     while attempt < MAX_RETRIES:
         attempt += 1
-        logs.append(f"🔄 Reflexion Cycle #{attempt}...")
+        yield f"\n🔄 Reflexion Cycle #{attempt}...\n"
         
         # 4. Reasoning Step
+        yield "🧠 Reasoning Engine: Analyzing failure patterns with Gemini...\n"
+        
+        # This will pause the stream naturally while waiting for Google's API!
         new_code = reasoning_engine(output, source_code, test_code, past_fix)
         
         if "API Error" in new_code:
-            logs.append(f"💀 Critical Failure: {new_code}")
+            yield f"💀 Critical Failure: {new_code}\n"
             break
             
         # Apply Patch
+        yield "🔧 Applying AI-generated patch to source code...\n"
         with open(test_path, 'w') as f: f.write(new_code)
+        await asyncio.sleep(0.5)
         
         # Verify (Reflexion)
+        yield "🧪 Observer: Re-running tests to verify patch...\n"
         success, new_output = run_observer(test_path)
         
         if success:
-            logs.append("✨ SUCCESS: Patch Verified!")
-            logs.append("💾 Saving to Long-Term Memory...")
-            memory.memorize(output, new_code) # Learn!
-            return {"status": "healed", "logs": logs}
+            yield "✨ SUCCESS: Patch Verified!\n"
+            yield "💾 Saving to Long-Term Memory...\n"
+            memory.memorize(output, new_code)
+            break
         else:
-            logs.append("⚠️ Patch Failed. Retrying...")
-            output = new_output # Feed new error back into loop
-            past_fix = None # Don't rely on memory for retries
+            yield "⚠️ Patch Failed. Refining prompt and retrying...\n"
+            output = new_output
+            past_fix = None 
 
-    return {"status": "failed", "logs": logs + ["💀 Max retries exceeded."]}
+    if not success:
+        yield "💀 Max retries exceeded. Manual intervention required.\n"
+
+    yield "DONE\n" # Signal React to close the stream
