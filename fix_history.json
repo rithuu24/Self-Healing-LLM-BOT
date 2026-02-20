@@ -1,6 +1,0 @@
-[
-  {
-    "error": "ZeroDivisionError: division by zero",
-    "fix": "\n    def divide(a, b):\n        if b == 0: return 0  # Safe division\n        return a / b\n    "
-  }
-]
