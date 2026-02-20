@@ -1,23 +1,28 @@
 import { useState, useEffect } from "react";
 import { 
   Terminal, Sparkles, BarChart3, Globe2, 
-  ShieldCheck, Activity, Zap 
+  ShieldCheck, Activity, Zap, Wrench, Home as HomeIcon 
 } from "lucide-react";
 
 // shadcn components
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
-// Custom components we built
+// Custom components
 import { AnimatedLogStream } from "@/components/ui/AnimatedLogStream";
 import { CodeComparison } from "@/components/ui/CodeComparison";
 import { PolyglotBridge } from "@/components/ui/PolyglotBridge";
+import { CodeHealer } from "@/components/ui/CodeHealer";
+import { Analytics } from "@/components/ui/Analytics";
+import { Home } from "@/components/ui/Home"; // Ensure this component is created
 
 export default function App() {
+  const [activeTab, setActiveTab] = useState("home");
   const [logs, setLogs] = useState<any[]>([]);
 
-  // 1. Simulation logic for the Live Logs
+  // Simulation logic for the Live Logs
   useEffect(() => {
     const sequence = [
       { id: 1, type: 'info', message: 'Initializing Test Suite: auth.spec.ts' },
@@ -33,112 +38,141 @@ export default function App() {
         setLogs(prev => [...prev, sequence[i]].slice(-8)); 
         i++;
       }
-    }, 2500);
+    }, 3000);
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-100 font-sans p-4 md:p-8">
+    <div className="min-h-screen bg-[#09090b] text-zinc-100 font-sans p-4 md:p-8 selection:bg-cyan-500/30">
+      
       {/* HEADER SECTION */}
-      <header className="max-w-6xl mx-auto mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="p-2.5 bg-cyan-500/10 rounded-xl border border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
-            <ShieldCheck className="w-8 h-8 text-cyan-500" />
+      <header className="max-w-6xl mx-auto mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex items-center gap-5 cursor-pointer" onClick={() => setActiveTab("home")}>
+          <div className="p-3 bg-cyan-500/10 rounded-2xl border border-cyan-500/20 shadow-[0_0_25px_rgba(6,182,212,0.15)]">
+            <ShieldCheck className="w-10 h-10 text-cyan-500" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tighter">GUARDIAN V2</h1>
-            <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">Self-Healing QA Engine</p>
+            <h1 className="text-3xl font-black tracking-tighter bg-gradient-to-r from-white to-zinc-500 bg-clip-text text-transparent">
+              GUARDIAN V2
+            </h1>
+            <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.3em]">Self-Healing QA Engine</p>
           </div>
         </div>
         
-        <div className="flex items-center gap-3">
-          <Badge variant="outline" className="border-emerald-500/30 text-emerald-400 bg-emerald-500/5 px-3 py-1 animate-pulse">
+        <div className="flex items-center gap-4">
+          <Badge variant="outline" className="border-emerald-500/30 text-emerald-400 bg-emerald-500/5 px-4 py-1.5 animate-pulse rounded-full text-[10px] tracking-widest font-bold">
             <Activity className="w-3 h-3 mr-2" /> SYSTEM_ACTIVE
           </Badge>
-          <div className="h-8 w-[1px] bg-zinc-800 mx-2 hidden md:block" />
-          <p className="text-xs font-mono text-zinc-500">LATENCY: 142ms</p>
+          <div className="h-10 w-[1px] bg-zinc-800 mx-2 hidden md:block" />
+          <Button className="btn-highlight bg-zinc-900 border border-zinc-800 hover:border-cyan-500/50 text-zinc-400 hover:text-cyan-400 transition-all duration-300 shadow-xl">
+            <Zap className="w-4 h-4 mr-2" /> Manual Scan
+          </Button>
         </div>
       </header>
 
       {/* MAIN CONTENT AREA */}
       <main className="max-w-6xl mx-auto">
-        <Tabs defaultValue="optimizer" className="space-y-6">
-          <TabsList className="bg-zinc-900/50 border border-zinc-800 p-1">
-            <TabsTrigger value="optimizer" className="gap-2 px-6"><Sparkles className="w-4 h-4" /> Optimizer</TabsTrigger>
-            <TabsTrigger value="analytics" className="gap-2 px-6"><BarChart3 className="w-4 h-4" /> Live Analytics</TabsTrigger>
-            <TabsTrigger value="polyglot" className="gap-2 px-6"><Globe2 className="w-4 h-4" /> Polyglot Bridge</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+          
+          {/* TACTICAL NAVIGATION */}
+          <TabsList className="bg-zinc-900/40 border border-zinc-800/50 p-1.5 rounded-xl backdrop-blur-md shadow-2xl flex w-full max-w-4xl mx-auto overflow-x-auto no-scrollbar">
+            {[
+              { id: "home", label: "Home", icon: <HomeIcon className="w-3.5 h-3.5" /> },
+              { id: "optimizer", label: "Optimizer", icon: <Sparkles className="w-3.5 h-3.5" /> },
+              { id: "analytics", label: "Analytics", icon: <BarChart3 className="w-3.5 h-3.5" /> },
+              { id: "healer", label: "Healer", icon: <Wrench className="w-3.5 h-3.5" /> },
+              { id: "polyglot", label: "Polyglot", icon: <Globe2 className="w-3.5 h-3.5" /> },
+            ].map((tab) => (
+              <TabsTrigger 
+                key={tab.id}
+                value={tab.id} 
+                className="flex-1 relative px-4 py-2.5 gap-2.5 rounded-lg transition-all duration-300
+                           data-[state=active]:bg-cyan-500/10 
+                           data-[state=active]:text-cyan-400 
+                           data-[state=active]:shadow-[0_0_20px_rgba(6,182,212,0.1)]
+                           data-[state=active]:border-cyan-500/20
+                           border border-transparent
+                           text-zinc-500 hover:text-zinc-300"
+              >
+                {tab.icon}
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em]">{tab.label}</span>
+              </TabsTrigger>
+            ))}
           </TabsList>
 
-          {/* TAB 1: CODE OPTIMIZER */}
-          <TabsContent value="optimizer" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <Card className="bg-zinc-950 border-zinc-800">
-              <CardHeader>
-                <CardTitle className="text-lg font-bold">Healer Logic Visualization</CardTitle>
-                <CardDescription>Real-time view of LLM repair operations on unit test selectors.</CardDescription>
+          {/* TAB 0: HOME PAGE */}
+          <TabsContent value="home" className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <Home onNavigate={(target) => setActiveTab(target)} />
+          </TabsContent>
+
+          {/* TAB 1: OPTIMIZER */}
+          <TabsContent value="optimizer" className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <Card className="bg-zinc-950 border-zinc-800 shadow-2xl">
+              <CardHeader className="border-b border-zinc-900 pb-8">
+                <CardTitle className="text-xl font-bold tracking-tight">Logic Visualization</CardTitle>
+                <CardDescription className="text-zinc-500">LLM-driven repair operations on stale unit test selectors.</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-8">
                 <CodeComparison 
                   oldCode={`expect(await page.innerText('button#login-btn')).toBe('Sign In')`}
                   newCode={`expect(await page.locator('button[data-testid="submit-login"]')).toBe('Login Now')`}
-                  explanation="The ID selector became stale due to a frontend framework update. The LLM identified the new data-testid attribute and updated the assertion message to match the new UI state."
+                  explanation="The ID selector became stale due to a UI refactor. Guardian auto-identified the new data-testid attribute and updated the assertion logic."
                 />
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* TAB 2: LIVE ANALYTICS (With your Logs) */}
-          <TabsContent value="analytics" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="md:col-span-2 bg-zinc-950 border-zinc-800">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-zinc-100">
-                    <Terminal className="w-5 h-5 text-cyan-500" /> Execution Stream
+          {/* TAB 2: ANALYTICS */}
+          <TabsContent value="analytics" className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="space-y-8">
+              <Analytics />
+              <Card className="bg-zinc-950 border-zinc-800 overflow-hidden">
+                <CardHeader className="bg-zinc-900/30 border-b border-zinc-900 py-4">
+                  <CardTitle className="flex items-center gap-3 text-sm font-mono uppercase tracking-widest">
+                    <Terminal className="w-4 h-4 text-cyan-500" /> Execution Stream
                   </CardTitle>
-                  <CardDescription>Live telemetry from the Self-Healing process</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-0">
                   <AnimatedLogStream logs={logs} />
                 </CardContent>
               </Card>
-
-              <div className="space-y-6">
-                <Card className="bg-zinc-950 border-zinc-800">
-                  <CardHeader><CardTitle className="text-sm">Health Score</CardTitle></CardHeader>
-                  <CardContent>
-                    <div className="text-4xl font-bold text-cyan-500">98.2%</div>
-                    <p className="text-[10px] text-zinc-500 mt-2 uppercase">Quality benchmark maintained</p>
-                  </CardContent>
-                </Card>
-                <Card className="bg-cyan-600 border-none shadow-lg shadow-cyan-900/20">
-                  <CardContent className="p-6">
-                    <Zap className="w-8 h-8 text-white mb-4" />
-                    <h3 className="font-bold text-white">Maintenance mode?</h3>
-                    <p className="text-cyan-100 text-xs mb-4">Run a full recursive scan of your test suite.</p>
-                  </CardContent>
-                </Card>
-              </div>
             </div>
           </TabsContent>
 
-          {/* TAB 3: POLYGLOT BRIDGE */}
-          <TabsContent value="polyglot" className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <Card className="bg-zinc-950 border-zinc-800">
+          {/* TAB 3: HEALER */}
+          <TabsContent value="healer" className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+             <CodeHealer />
+          </TabsContent>
+
+          {/* TAB 4: POLYGLOT */}
+          <TabsContent value="polyglot" className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <Card className="bg-zinc-950 border-zinc-800 shadow-2xl">
               <CardHeader>
-                <CardTitle>Language Migration Engine</CardTitle>
-                <CardDescription>Upgrading legacy testing logic to modern standards.</CardDescription>
+                <CardTitle className="text-xl font-bold">Migration Bridge</CardTitle>
+                <CardDescription className="text-zinc-500 text-xs">Transforming legacy syntax into modern, type-safe standards.</CardDescription>
               </CardHeader>
               <CardContent>
                 <PolyglotBridge 
                   fromLang="JS" 
                   toLang="TS" 
                   progress={82} 
-                  status="Injecting type definitions..." 
+                  status="Mapping dynamic props to interfaces..." 
                 />
               </CardContent>
             </Card>
           </TabsContent>
+
         </Tabs>
       </main>
+
+      {/* FOOTER */}
+      <footer className="max-w-6xl mx-auto mt-20 pb-10 border-t border-zinc-900 pt-8 flex justify-between items-center opacity-40 hover:opacity-100 transition-opacity">
+        <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-zinc-500">Guardian Protocol v2.0.4-Alpha</p>
+        <div className="flex gap-6 text-[10px] font-mono text-zinc-500">
+          <span>LATENCY: 142MS</span>
+          <span>UPTIME: 99.9%</span>
+        </div>
+      </footer>
     </div>
   );
 }

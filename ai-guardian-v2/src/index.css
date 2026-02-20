@@ -49,6 +49,10 @@
     --color-sidebar-ring: var(--sidebar-ring);
 }
 
+@theme {
+  --color-zinc-950: #09090b;
+}
+
 :root {
     --radius: 0.625rem;
     --background: oklch(1 0 0);
@@ -125,4 +129,43 @@
   body {
     @apply bg-background text-foreground;
     }
+@layer components {
+  .btn-highlight {
+    @apply relative overflow-hidden transition-all duration-300;
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.2);
+  }
+  
+  .btn-highlight:hover {
+    @apply border-cyan-400/50;
+    box-shadow: 0 0 25px rgba(6, 182, 212, 0.4);
+    transform: translateY(-1px);
+  }
+
+  .btn-highlight:active {
+    @apply scale-95;
+  }
+}
+@layer components {
+  /* High-end button highlight */
+  .btn-highlight {
+    @apply relative overflow-hidden transition-all duration-300 border-zinc-800;
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.1);
+  }
+  
+  .btn-highlight:hover {
+    @apply border-cyan-400/40;
+    box-shadow: 0 0 25px rgba(6, 182, 212, 0.3);
+    transform: translateY(-1px);
+  }
+
+  /* Hide scrollbars for the tactical tabs */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
 }
