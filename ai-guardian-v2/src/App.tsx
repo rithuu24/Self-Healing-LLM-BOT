@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Terminal, Sparkles, BarChart3, Globe2, 
   ShieldCheck, Activity, Zap, Wrench, Home as HomeIcon 
@@ -16,13 +16,13 @@ import { CodeComparison } from "@/components/ui/CodeComparison";
 import { PolyglotBridge } from "@/components/ui/PolyglotBridge";
 import { CodeHealer } from "@/components/ui/CodeHealer";
 import { Analytics } from "@/components/ui/Analytics";
-import { Home } from "@/components/ui/Home"; // Ensure this component is created
+import { Home } from "@/components/ui/Home";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("home");
   const [logs, setLogs] = useState<any[]>([]);
 
-  // Simulation logic for the Live Logs
+  // 1. Simulation logic for the Live Logs
   useEffect(() => {
     const sequence = [
       { id: 1, type: 'info', message: 'Initializing Test Suite: auth.spec.ts' },
@@ -47,8 +47,8 @@ export default function App() {
       
       {/* HEADER SECTION */}
       <header className="max-w-6xl mx-auto mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="flex items-center gap-5 cursor-pointer" onClick={() => setActiveTab("home")}>
-          <div className="p-3 bg-cyan-500/10 rounded-2xl border border-cyan-500/20 shadow-[0_0_25px_rgba(6,182,212,0.15)]">
+        <div className="flex items-center gap-5 cursor-pointer group" onClick={() => setActiveTab("home")}>
+          <div className="p-3 bg-cyan-500/10 rounded-2xl border border-cyan-500/20 shadow-[0_0_25px_rgba(6,182,212,0.15)] group-hover:border-cyan-400 transition-colors">
             <ShieldCheck className="w-10 h-10 text-cyan-500" />
           </div>
           <div>
@@ -64,7 +64,7 @@ export default function App() {
             <Activity className="w-3 h-3 mr-2" /> SYSTEM_ACTIVE
           </Badge>
           <div className="h-10 w-[1px] bg-zinc-800 mx-2 hidden md:block" />
-          <Button className="btn-highlight bg-zinc-900 border border-zinc-800 hover:border-cyan-500/50 text-zinc-400 hover:text-cyan-400 transition-all duration-300 shadow-xl">
+          <Button className="btn-highlight bg-zinc-900 border border-zinc-800 hover:border-cyan-500/50 text-zinc-400 hover:text-cyan-400 transition-all duration-300 shadow-xl h-10">
             <Zap className="w-4 h-4 mr-2" /> Manual Scan
           </Button>
         </div>
@@ -116,27 +116,25 @@ export default function App() {
                 <CodeComparison 
                   oldCode={`expect(await page.innerText('button#login-btn')).toBe('Sign In')`}
                   newCode={`expect(await page.locator('button[data-testid="submit-login"]')).toBe('Login Now')`}
-                  explanation="The ID selector became stale due to a UI refactor. Guardian auto-identified the new data-testid attribute and updated the assertion logic."
+                  explanation="The ID selector became stale due to a UI refactor. Guardian auto-identified the new data-testid attribute."
                 />
               </CardContent>
             </Card>
           </TabsContent>
 
           {/* TAB 2: ANALYTICS */}
-          <TabsContent value="analytics" className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="space-y-8">
-              <Analytics />
-              <Card className="bg-zinc-950 border-zinc-800 overflow-hidden">
-                <CardHeader className="bg-zinc-900/30 border-b border-zinc-900 py-4">
-                  <CardTitle className="flex items-center gap-3 text-sm font-mono uppercase tracking-widest">
-                    <Terminal className="w-4 h-4 text-cyan-500" /> Execution Stream
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <AnimatedLogStream logs={logs} />
-                </CardContent>
-              </Card>
-            </div>
+          <TabsContent value="analytics" className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-8">
+            <Analytics />
+            <Card className="bg-zinc-950 border-zinc-800 overflow-hidden">
+              <CardHeader className="bg-zinc-900/30 border-b border-zinc-900 py-4">
+                <CardTitle className="flex items-center gap-3 text-sm font-mono uppercase tracking-widest">
+                  <Terminal className="w-4 h-4 text-cyan-500" /> Execution Stream
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <AnimatedLogStream logs={logs} />
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* TAB 3: HEALER */}
@@ -156,12 +154,11 @@ export default function App() {
                   fromLang="JS" 
                   toLang="TS" 
                   progress={82} 
-                  status="Mapping dynamic props to interfaces..." 
+                  status="Injecting type definitions..." 
                 />
               </CardContent>
             </Card>
           </TabsContent>
-
         </Tabs>
       </main>
 
