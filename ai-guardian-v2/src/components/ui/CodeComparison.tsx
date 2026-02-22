@@ -1,4 +1,6 @@
-import { Check, ArrowRight, Code2 } from "lucide-react"; // ArrowRight is now used!
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Check, X, ArrowRight, Lightbulb, ShieldCheck } from "lucide-react";
 
 interface CodeComparisonProps {
   oldCode: string;
@@ -8,45 +10,95 @@ interface CodeComparisonProps {
 
 export function CodeComparison({ oldCode, newCode, explanation }: CodeComparisonProps) {
   return (
-    <div className="relative grid grid-cols-1 md:grid-cols-2 gap-8">
-      {/* The Visual "Bridge" - Now using ArrowRight */}
-      <div className="hidden md:flex absolute left-1/2 top-[45%] -translate-x-1/2 -translate-y-1/2 z-10">
-        <div className="p-2 rounded-full bg-zinc-900 border border-zinc-800 shadow-xl shadow-black">
-          <ArrowRight className="w-5 h-5 text-cyan-500 animate-pulse" />
+    <div className="space-y-6">
+      {/* HEADER: STATUS INDICATOR */}
+      <div className="flex items-center justify-between mb-4 px-2">
+        <div className="flex items-center gap-3">
+          <div className="p-1.5 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+            <ShieldCheck className="w-4 h-4 text-emerald-500" />
+          </div>
+          <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-widest">Logic Patch Verified</span>
+        </div>
+        <div className="text-[10px] font-mono text-zinc-600">
+          HEAL_CONFIDENCE: <span className="text-cyan-400">98.4%</span>
         </div>
       </div>
 
-      {/* Old/Broken Code */}
-      <div className="rounded-lg bg-zinc-950 border border-rose-500/20 overflow-hidden opacity-80 hover:opacity-100 transition-opacity">
-        <div className="bg-rose-500/10 px-4 py-2 border-b border-rose-500/20">
-          <span className="text-[10px] font-mono text-rose-400 uppercase tracking-[0.2em]">Legacy Branch</span>
+      {/* CODE GRID */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-px bg-zinc-800 border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl">
+        
+        {/* OLD CODE (FAILED) */}
+        <div className="bg-zinc-950 p-6 relative group">
+          <div className="absolute top-4 right-4 flex items-center gap-2 px-2 py-1 rounded bg-rose-500/10 border border-rose-500/20">
+            <X className="w-3 h-3 text-rose-500" />
+            <span className="text-[9px] font-bold text-rose-500 uppercase">Stale</span>
+          </div>
+          <h4 className="text-[10px] font-mono text-zinc-600 uppercase mb-4 tracking-widest">Legacy Trace</h4>
+          <pre className="text-sm font-mono leading-relaxed text-zinc-400 overflow-x-auto">
+            <code>
+              {oldCode.split('').map((char, i) => (
+                <motion.span 
+                  key={i}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: i * 0.005 }}
+                >
+                  {char}
+                </motion.span>
+              ))}
+            </code>
+          </pre>
+          <div className="mt-4 pt-4 border-t border-zinc-900/50">
+            <p className="text-[10px] text-zinc-500 italic">Error: element_not_found_exception</p>
+          </div>
         </div>
-        <pre className="p-4 font-mono text-[11px] text-zinc-500 overflow-x-auto leading-relaxed">
-          <code>{oldCode}</code>
-        </pre>
+
+        {/* NEW CODE (HEALED) */}
+        <div className="bg-[#0c0c0e] p-6 relative group border-l border-zinc-800">
+          <div className="absolute top-4 right-4 flex items-center gap-2 px-2 py-1 rounded bg-cyan-500/10 border border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
+            <Check className="w-3 h-3 text-cyan-400" />
+            <span className="text-[9px] font-bold text-cyan-400 uppercase">Healed</span>
+          </div>
+          <h4 className="text-[10px] font-mono text-zinc-600 uppercase mb-4 tracking-widest">Synthetic Patch</h4>
+          <pre className="text-sm font-mono leading-relaxed text-cyan-50/90 overflow-x-auto">
+            <code>
+              {newCode.split('').map((char, i) => (
+                <motion.span 
+                  key={i}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: i * 0.005 + 0.2 }}
+                >
+                  {char}
+                </motion.span>
+              ))}
+            </code>
+          </pre>
+          <div className="mt-4 pt-4 border-t border-zinc-900/50">
+            <p className="text-[10px] text-cyan-500/80 font-bold uppercase tracking-tighter flex items-center gap-2">
+              <ArrowRight className="w-3 h-3" /> Selector Re-mapped
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* New/Healed Code */}
-      <div className="rounded-lg bg-zinc-950 border border-emerald-500/20 overflow-hidden shadow-[0_0_30px_rgba(6,182,212,0.05)]">
-        <div className="bg-emerald-500/10 px-4 py-2 border-b border-emerald-500/20 flex justify-between items-center">
-          <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-[0.2em]">Optimized Output</span>
-          <Check className="w-3 h-3 text-emerald-400" />
-        </div>
-        <pre className="p-4 font-mono text-[11px] text-emerald-50/90 overflow-x-auto leading-relaxed">
-          <code>{newCode}</code>
-        </pre>
-      </div>
-
-      {/* Explanation Footer */}
-      <div className="md:col-span-2 p-4 bg-zinc-900/50 border border-zinc-800 rounded-xl flex items-start gap-4">
-        <div className="p-2 bg-cyan-500/10 rounded-lg border border-cyan-500/20 shrink-0">
-          <Code2 className="w-5 h-5 text-cyan-400" />
+      {/* EXPLANATION CARD */}
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="p-5 rounded-2xl bg-zinc-900/30 border border-zinc-800 flex gap-4 items-start"
+      >
+        <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+          <Lightbulb className="w-4 h-4 text-amber-500" />
         </div>
         <div>
-          <h4 className="text-sm font-bold text-zinc-200 mb-1">AI Healing Analysis</h4>
-          <p className="text-sm text-zinc-400 leading-relaxed italic">"{explanation}"</p>
+          <h5 className="text-[11px] font-bold text-zinc-200 uppercase tracking-widest mb-1">Neural Rationale</h5>
+          <p className="text-sm text-zinc-500 leading-relaxed">
+            {explanation}
+          </p>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
