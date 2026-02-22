@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { 
   ShieldCheck, User, LogOut, Settings, ChevronDown, CreditCard, 
-  Sparkles, BarChart3, Globe2, Wrench, Home as HomeIcon, Terminal, Zap
+  Sparkles, BarChart3, Globe2, Wrench, Home as HomeIcon, Zap,
+  Activity, Cpu
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -13,9 +14,9 @@ import { Button } from "@/components/ui/button";
 // Research Modules & Custom Components
 import { Home } from "@/components/ui/Home";
 import { SignInModal } from "@/components/ui/SignInModal";
-import { Analytics } from "@/components/ui/Analytics";
+import { Analytics } from "@/components/ui/Analytics"; // <-- No curly braces
 import { CodeHealer } from "@/components/ui/CodeHealer";
-import { AnimatedLogStream } from "@/components/ui/AnimatedLogStream";
+// <-- AnimatedLogStream is deleted from here
 import { CodeComparison } from "@/components/ui/CodeComparison";
 import { PolyglotBridge } from "@/components/ui/PolyglotBridge";
 
@@ -87,7 +88,7 @@ export default function App() {
             </div>
           ) : (
             <div className="relative">
-              {/* Profile Trigger (The Drag Box Trigger) */}
+              {/* Profile Trigger */}
               <button 
                 onClick={() => setShowProfileMenu(!showProfileMenu)} 
                 aria-label="Open User Menu"
@@ -168,10 +169,12 @@ export default function App() {
             ))}
           </TabsList>
 
+          {/* HOME TAB */}
           <TabsContent value="home" className="animate-in fade-in slide-in-from-bottom-4 duration-700">
             <Home onNavigate={(target) => setActiveTab(target)} />
           </TabsContent>
 
+          {/* OPTIMIZER TAB */}
           <TabsContent value="optimizer" className="animate-in fade-in slide-in-from-bottom-4 duration-700">
             <Card className="bg-zinc-950 border-zinc-800 shadow-2xl">
               <CardHeader className="border-b border-zinc-900 pb-8">
@@ -190,24 +193,17 @@ export default function App() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="analytics" className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-8">
-            <Analytics />
-            <Card className="bg-zinc-950 border-zinc-800 overflow-hidden">
-              <CardHeader className="bg-zinc-900/30 border-b border-zinc-900 py-4">
-                <CardTitle className="flex items-center gap-3 text-sm font-mono uppercase tracking-widest text-white">
-                  <Terminal className="w-4 h-4 text-cyan-500" /> Execution Stream
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <AnimatedLogStream logs={logs} />
-              </CardContent>
-            </Card>
+          {/* ANALYTICS TAB */}
+          <TabsContent value="analytics" className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-6">
+            <Analytics logs={logs} />
           </TabsContent>
 
+          {/* HEALER TAB */}
           <TabsContent value="healer" className="animate-in fade-in slide-in-from-bottom-4 duration-700">
              <CodeHealer />
           </TabsContent>
 
+          {/* POLYGLOT TAB */}
           <TabsContent value="polyglot" className="animate-in fade-in slide-in-from-bottom-4 duration-700">
             <Card className="bg-zinc-950 border-zinc-800 shadow-2xl">
               <CardHeader>
@@ -221,6 +217,7 @@ export default function App() {
               </CardContent>
             </Card>
           </TabsContent>
+
         </Tabs>
       </main>
 
@@ -237,11 +234,12 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      {/* GLOBAL FOOTER */}
       <footer className="max-w-6xl mx-auto mt-20 pb-10 border-t border-zinc-900 pt-8 flex justify-between items-center opacity-40 hover:opacity-100 transition-opacity">
-        <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-zinc-500">Guardian Protocol v2.0.4-Alpha</p>
+        <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-zinc-500 hidden sm:block">Guardian Protocol v2.0.4-Alpha</p>
         <div className="flex gap-6 text-[10px] font-mono text-zinc-500">
-          <span>LATENCY: 142MS</span>
-          <span>UPTIME: 99.9%</span>
+          <span className="flex items-center gap-1.5"><Activity className="w-3 h-3 text-emerald-500" /> LATENCY: 142MS</span>
+          <span className="flex items-center gap-1.5"><Cpu className="w-3 h-3 text-cyan-500" /> UPTIME: 99.9%</span>
         </div>
       </footer>
     </div>

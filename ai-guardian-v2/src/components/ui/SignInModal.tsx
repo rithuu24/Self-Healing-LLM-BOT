@@ -83,7 +83,7 @@ export function SignInModal({ onClose, onSuccess }: SignInModalProps) {
               <motion.form key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} onSubmit={handleAction} className="space-y-5">
                 <header className="text-center mb-6">
                    <h2 className="text-2xl font-black text-white uppercase tracking-tighter">
-                     {activeTab === "login" ? "Neural Gateway" : "Neural Enrollment"}
+                     {activeTab === "login" ? "Guardian V2" : "Guardian Enrollment"}
                    </h2>
                 </header>
 

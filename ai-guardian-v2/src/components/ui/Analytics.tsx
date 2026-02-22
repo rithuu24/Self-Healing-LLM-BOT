@@ -1,124 +1,132 @@
-import React from 'react'; // ADDED THIS IMPORT
-import { 
-  LineChart, Line, XAxis, YAxis, CartesianGrid, 
-  Tooltip, ResponsiveContainer, AreaChart, Area 
-} from 'recharts';
+import React from "react";
+import { motion } from "framer-motion";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Zap, ShieldCheck, Timer } from "lucide-react";
+import { Activity, ShieldCheck, Clock, Terminal, TrendingUp } from "lucide-react";
+import { AnimatedLogStream } from "@/components/ui/AnimatedLogStream"; 
 
-const performanceData = [
-  { cycle: '01', accuracy: 82, latency: 450 },
-  { cycle: '02', accuracy: 85, latency: 410 },
-  { cycle: '03', accuracy: 84, latency: 430 },
-  { cycle: '04', accuracy: 91, latency: 380 },
-  { cycle: '05', accuracy: 89, latency: 390 },
-  { cycle: '06', accuracy: 95, latency: 310 },
-  { cycle: '07', accuracy: 98.2, latency: 280 },
-];
-
-export function Analytics() {
+export function Analytics({ logs }: { logs: any[] }) {
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      {/* Metrics Row */}
+    <div className="space-y-6">
+      {/* Analytics Metric Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <MetricCard 
-          title="Avg. Accuracy" 
-          value="98.2%" 
-          trend="+4.1%" 
-          icon={<ShieldCheck className="w-4 h-4 text-emerald-400" />} 
-        />
-        <MetricCard 
-          title="Mean Latency" 
-          value="280ms" 
-          trend="-15%" 
-          icon={<Timer className="w-4 h-4 text-cyan-400" />} 
-        />
-        <MetricCard 
-          title="Heal Energy" 
-          value="Stable" 
-          trend="OPTIMAL" 
-          icon={<Zap className="w-4 h-4 text-amber-400" />} 
-        />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Accuracy Area Chart */}
-        <Card className="bg-zinc-950/50 border-zinc-800 shadow-xl">
-          <CardHeader className="flex flex-row items-center justify-between border-b border-zinc-900/50 pb-4">
-            <CardTitle className="text-xs font-mono uppercase tracking-[0.2em] text-zinc-500">
-              Accuracy Trajectory
-            </CardTitle>
-            <Badge className="bg-emerald-500/10 text-emerald-400 border-none text-[10px] px-2 py-0">LIVE_FEED</Badge>
-          </CardHeader>
-          <CardContent className="h-[300px] pt-6">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={performanceData}>
-                <defs>
-                  <linearGradient id="colorAcc" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#18181b" vertical={false} />
-                <XAxis dataKey="cycle" stroke="#3f3f46" fontSize={10} tickLine={false} axisLine={false} dy={10} />
-                <YAxis stroke="#3f3f46" fontSize={10} tickLine={false} axisLine={false} domain={[80, 100]} dx={-10} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#09090b', border: '1px solid #27272a', borderRadius: '8px' }}
-                  itemStyle={{ color: '#10b981', fontSize: '10px' }}
-                />
-                <Area type="monotone" dataKey="accuracy" stroke="#10b981" fill="url(#colorAcc)" strokeWidth={2} />
-              </AreaChart>
-            </ResponsiveContainer>
+        <Card className="bg-zinc-950 border-zinc-800 shadow-xl">
+          <CardContent className="p-6 flex items-center gap-4">
+            <div className="p-3 bg-cyan-500/10 rounded-xl text-cyan-400">
+              <Activity className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-[10px] uppercase font-bold tracking-widest text-zinc-500">Total Executions</p>
+              <p className="text-2xl font-bold text-zinc-100 mt-1">14,204</p>
+            </div>
           </CardContent>
         </Card>
 
-        {/* Latency Line Chart */}
-        <Card className="bg-zinc-950/50 border-zinc-800 shadow-xl">
-          <CardHeader className="flex flex-row items-center justify-between border-b border-zinc-900/50 pb-4">
-            <CardTitle className="text-xs font-mono uppercase tracking-[0.2em] text-zinc-500">
-              Latency Response
-            </CardTitle>
-            <Badge className="bg-cyan-500/10 text-cyan-400 border-none text-[10px] px-2 py-0">STABLE</Badge>
-          </CardHeader>
-          <CardContent className="h-[300px] pt-6">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={performanceData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#18181b" vertical={false} />
-                <XAxis dataKey="cycle" stroke="#3f3f46" fontSize={10} tickLine={false} axisLine={false} dy={10} />
-                <YAxis stroke="#3f3f46" fontSize={10} tickLine={false} axisLine={false} dx={-10} />
-                <Tooltip 
-                   contentStyle={{ backgroundColor: '#09090b', border: '1px solid #27272a', borderRadius: '8px' }}
-                   itemStyle={{ color: '#06b6d4', fontSize: '10px' }}
-                />
-                <Line type="monotone" dataKey="latency" stroke="#06b6d4" strokeWidth={2} dot={{ fill: '#06b6d4', r: 4 }} activeDot={{ r: 6 }} />
-              </LineChart>
-            </ResponsiveContainer>
+        <Card className="bg-zinc-950 border-zinc-800 shadow-xl">
+          <CardContent className="p-6 flex items-center gap-4">
+            <div className="p-3 bg-emerald-500/10 rounded-xl text-emerald-400">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-[10px] uppercase font-bold tracking-widest text-zinc-500">Auto-Healed</p>
+              <p className="text-2xl font-bold text-zinc-100 mt-1">892</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-zinc-950 border-zinc-800 shadow-xl">
+          <CardContent className="p-6 flex items-center gap-4">
+            <div className="p-3 bg-amber-500/10 rounded-xl text-amber-400">
+              <Clock className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-[10px] uppercase font-bold tracking-widest text-zinc-500">Avg Resolution</p>
+              <p className="text-2xl font-bold text-zinc-100 mt-1">1.2s</p>
+            </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* NEW: Interactive Performance Graph */}
+      <PerformanceGraph />
+
+      {/* Live Log Stream */}
+      <Card className="bg-zinc-950 border-zinc-800 overflow-hidden shadow-xl">
+        <CardHeader className="bg-zinc-900/30 border-b border-zinc-900 py-4">
+          <CardTitle className="flex items-center justify-between text-sm font-mono uppercase tracking-widest text-white">
+            <div className="flex items-center gap-3">
+              <Terminal className="w-4 h-4 text-cyan-500" /> Execution Stream
+            </div>
+            <div className="flex items-center gap-2 text-[10px] text-zinc-500">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              LIVE
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <AnimatedLogStream logs={logs} />
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
-// Sub-component for individual metric cards
-function MetricCard({ title, value, trend, icon }: { title: string, value: string, trend: string, icon: React.ReactNode }) {
+// --- Sub-Component: Custom Animated Bar Chart ---
+function PerformanceGraph() {
+  // Simulated data representing 24 hours of AI auto-healing events
+  const hourlyData = [
+    12, 18, 15, 25, 32, 45, 30, 50, 65, 55, 70, 85, 
+    60, 45, 35, 40, 55, 75, 80, 95, 85, 70, 50, 40
+  ];
+
   return (
-    <Card className="bg-zinc-950/50 border-zinc-800 p-5 group hover:border-cyan-500/30 transition-all duration-300">
-      <div className="flex justify-between items-start">
-        <div className="space-y-1">
-          <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.2em]">{title}</p>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-black text-zinc-100">{value}</span>
-            <span className={`text-[10px] font-bold ${trend.startsWith('+') ? 'text-emerald-500' : 'text-rose-500'}`}>
-              {trend}
-            </span>
-          </div>
+    <Card className="bg-zinc-950 border-zinc-800 shadow-xl">
+      <CardHeader className="pb-2 flex flex-row justify-between items-end">
+        <div>
+          <CardTitle className="text-sm font-mono uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-cyan-500" /> Auto-Healing Events (24h)
+          </CardTitle>
         </div>
-        <div className="p-2.5 bg-zinc-900 border border-zinc-800 rounded-xl group-hover:scale-110 transition-transform duration-300">
-          {icon}
+        <div className="text-[10px] font-mono text-zinc-500 hidden sm:block">
+          Peak: 95 events/hr
         </div>
-      </div>
+      </CardHeader>
+      
+      <CardContent>
+        <div className="h-40 w-full flex items-end justify-between gap-1 sm:gap-2 pt-6">
+          {hourlyData.map((val, i) => (
+            <div key={i} className="w-full relative group h-full flex items-end">
+              {/* Tooltip on Hover */}
+              <div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-zinc-800 text-[10px] py-1 px-2 rounded font-mono text-zinc-200 shadow-xl pointer-events-none transition-opacity z-10 whitespace-nowrap">
+                {val} Heals
+              </div>
+              
+              {/* Animated Bar */}
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: `${val}%`, opacity: 1 }}
+                transition={{ 
+                  duration: 0.8, 
+                  delay: i * 0.03, // Creates a wave effect from left to right
+                  ease: "easeOut" 
+                }}
+                className={`w-full rounded-t-sm transition-colors duration-300 relative cursor-pointer
+                  ${val > 80 ? 'bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)]' 
+                  : val > 50 ? 'bg-cyan-500/50 hover:bg-cyan-400' 
+                  : 'bg-zinc-800 hover:bg-cyan-500/50'}`}
+              />
+            </div>
+          ))}
+        </div>
+        
+        {/* X-Axis Labels */}
+        <div className="flex justify-between items-center mt-3 text-[9px] font-mono text-zinc-600 uppercase tracking-widest">
+          <span>00:00</span>
+          <span>06:00</span>
+          <span>12:00</span>
+          <span>18:00</span>
+          <span>Now</span>
+        </div>
+      </CardContent>
     </Card>
   );
 }
