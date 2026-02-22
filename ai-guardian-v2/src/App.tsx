@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { 
   ShieldCheck, User, LogOut, Settings, ChevronDown, CreditCard, 
   Sparkles, BarChart3, Globe2, Wrench, Home as HomeIcon, Zap,
-  Activity, Cpu
+  Activity, Cpu, X, Edit3, Mail, ChevronRight
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -14,9 +14,8 @@ import { Button } from "@/components/ui/button";
 // Research Modules & Custom Components
 import { Home } from "@/components/ui/Home";
 import { SignInModal } from "@/components/ui/SignInModal";
-import { Analytics } from "@/components/ui/Analytics"; // <-- No curly braces
+import {Analytics} from "@/components/ui/Analytics";
 import { CodeHealer } from "@/components/ui/CodeHealer";
-// <-- AnimatedLogStream is deleted from here
 import { CodeComparison } from "@/components/ui/CodeComparison";
 import { PolyglotBridge } from "@/components/ui/PolyglotBridge";
 
@@ -27,7 +26,7 @@ export default function App() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [logs, setLogs] = useState<any[]>([]);
 
-  // 1. Live Telemetry Simulation logic
+  // Live Telemetry Simulation logic
   useEffect(() => {
     const sequence = [
       { id: 1, type: 'info', message: 'Initializing Test Suite: auth.spec.ts' },
@@ -87,49 +86,92 @@ export default function App() {
               </Button>
             </div>
           ) : (
-            <div className="relative">
-              {/* Profile Trigger */}
+            <div>
+              {/* Profile Trigger Button */}
               <button 
-                onClick={() => setShowProfileMenu(!showProfileMenu)} 
+                onClick={() => setShowProfileMenu(true)} 
                 aria-label="Open User Menu"
-                title="Account Settings"
                 className="flex items-center gap-3 p-1.5 pr-4 rounded-2xl bg-zinc-900/50 border border-zinc-800 hover:border-zinc-700 transition-all group"
               >
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/10">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
                   <User className="w-4 h-4 text-white" />
                 </div>
                 <div className="text-left hidden sm:block">
                   <p className="text-[11px] font-bold text-zinc-200 leading-none">Admin_User</p>
-                  <p className="text-[9px] font-mono text-zinc-500 uppercase mt-0.5 tracking-tighter">Tier: Enterprise</p>
+                  <p className="text-[9px] font-mono text-cyan-500 uppercase mt-0.5 tracking-tighter">Pro Plan</p>
                 </div>
-                <ChevronDown className={`w-3.5 h-3.5 text-zinc-500 transition-transform duration-300 ${showProfileMenu ? 'rotate-180' : ''}`} />
               </button>
 
+              {/* SLIDE-OUT PROFILE SIDEBAR */}
               <AnimatePresence>
                 {showProfileMenu && (
                   <>
-                    <div className="fixed inset-0 z-40" onClick={() => setShowProfileMenu(false)} />
+                    {/* Dark Backdrop */}
                     <motion.div 
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }} 
-                      animate={{ opacity: 1, y: 0, scale: 1 }} 
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }} 
-                      className="absolute right-0 mt-3 w-56 bg-[#0c0c0e] border border-zinc-800 rounded-2xl shadow-2xl z-50 overflow-hidden backdrop-blur-xl"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40" 
+                      onClick={() => setShowProfileMenu(false)} 
+                    />
+                    
+                    {/* Right-Side Drawer */}
+                    <motion.div 
+                      initial={{ x: "100%" }} 
+                      animate={{ x: 0 }} 
+                      exit={{ x: "100%" }} 
+                      transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                      className="fixed top-0 right-0 h-full w-full max-w-sm bg-[#09090b] border-l border-zinc-800 shadow-2xl z-50 flex flex-col"
                     >
-                      <div className="p-4 border-b border-zinc-800/50 bg-zinc-900/20">
-                        <p className="text-xs font-bold text-zinc-100">User Settings</p>
-                        <p className="text-[10px] text-zinc-500 font-mono">ID: 882-QX-4</p>
+                      {/* Drawer Header */}
+                      <div className="flex items-center justify-between p-6 border-b border-zinc-800/50">
+                        <h2 className="text-lg font-bold text-zinc-100 tracking-tight">Account</h2>
+                        <button 
+                          type="button"
+                          aria-label="Close account menu"
+                          onClick={() => setShowProfileMenu(false)} 
+                          className="p-2 bg-zinc-900 hover:bg-zinc-800 rounded-full transition-colors text-zinc-400 hover:text-white"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
                       </div>
-                      <div className="p-2">
-                        <MenuButton icon={<User className="w-4 h-4" />} label="Profile" />
-                        <MenuButton icon={<CreditCard className="w-4 h-4" />} label="Billing" />
-                        <MenuButton icon={<Settings className="w-4 h-4" />} label="System Config" />
+
+                      {/* User Identity Card */}
+                      <div className="p-6 border-b border-zinc-800/50 bg-zinc-900/20">
+                        <div className="flex items-center gap-4">
+                          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 shrink-0">
+                            <User className="w-6 h-6 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="text-base font-bold text-white">Admin_User</h3>
+                            <p className="text-xs text-zinc-400 flex items-center gap-1.5 mt-1">
+                              <Mail className="w-3 h-3" /> admin@guardian.dev
+                            </p>
+                            <div className="mt-2 inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                              Pro Plan
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div className="p-2 border-t border-zinc-800/50 bg-zinc-900/10">
+
+                      {/* Menu Options */}
+                      <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                        <p className="px-3 text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-2 mt-2">Manage</p>
+                        <DrawerMenuButton icon={<User />} title="Account Profile" subtitle="View your public profile" />
+                        <DrawerMenuButton icon={<Edit3 />} title="Edit Profile" subtitle="Change name, avatar & bio" />
+                        <DrawerMenuButton icon={<Settings />} title="Profile Settings" subtitle="Passwords & security" />
+                        
+                        <p className="px-3 text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-2 mt-6">Billing</p>
+                        <DrawerMenuButton icon={<CreditCard />} title="Subscription" subtitle="Manage payment methods" />
+                      </div>
+
+                      {/* Drawer Footer (Logout) */}
+                      <div className="p-6 border-t border-zinc-800/50 bg-zinc-950">
                         <button 
                           onClick={() => { setIsLoggedIn(false); setShowProfileMenu(false); }} 
-                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-rose-400 hover:bg-rose-500/10 transition-all font-bold text-xs"
+                          className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500 hover:text-white transition-all font-bold text-sm shadow-lg shadow-rose-500/5"
                         >
-                          <LogOut className="w-4 h-4" /> Log out
+                          <LogOut className="w-4 h-4" /> Sign Out
                         </button>
                       </div>
                     </motion.div>
@@ -246,15 +288,20 @@ export default function App() {
   );
 }
 
-// Helper component for dropdown items
-function MenuButton({ icon, label }: { icon: React.ReactNode, label: string }) {
+// --- Helper Component for the Sidebar Menu ---
+function DrawerMenuButton({ icon, title, subtitle }: { icon: React.ReactNode, title: string, subtitle: string }) {
   return (
-    <button 
-      title={label}
-      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-zinc-400 hover:bg-zinc-800/50 hover:text-cyan-400 transition-all text-xs font-bold"
-    >
-      <div className="text-current" aria-hidden="true">{icon}</div>
-      <span className="text-xs">{label}</span>
+    <button className="w-full flex items-center justify-between p-3 rounded-xl border border-transparent hover:border-zinc-800 hover:bg-zinc-900/50 group transition-all text-left">
+      <div className="flex items-center gap-4">
+        <div className="p-2 rounded-lg bg-zinc-900 text-zinc-400 group-hover:text-cyan-400 group-hover:bg-cyan-500/10 transition-colors">
+          {React.cloneElement(icon as React.ReactElement, { className: "w-4 h-4" } as any)}
+        </div>
+        <div>
+          <p className="text-sm font-bold text-zinc-200 group-hover:text-white transition-colors">{title}</p>
+          <p className="text-[10px] text-zinc-500 mt-0.5">{subtitle}</p>
+        </div>
+      </div>
+      <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-cyan-400 transition-colors opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0" />
     </button>
   );
 }
