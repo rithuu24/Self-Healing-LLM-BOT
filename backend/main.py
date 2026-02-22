@@ -1,72 +1,99 @@
 import os
-from fastapi import FastAPI, HTTPException
+import json
+import sys
+import logging
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
-from openai import AsyncOpenAI
-import json
+from google import genai
+from google.genai import types
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
-# Load environment variables from the .env file
+# --- 1. SETUP LOGGING ---
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("GuardianAPI")
+
+# 2. Load environment variables
 load_dotenv()
 
-# Initialize OpenAI Client
-client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# --- 3. RETRY LOGIC ---
+# This will catch the 'ResourceExhausted' (429) error and retry
+# It waits 2s, then 4s, then 8s... up to 10s max.
+def before_retry_log(retry_state):
+    logger.info(f"🔄 Rate limit hit. Retrying attempt {retry_state.attempt_number}...")
 
-app = FastAPI(title="Guardian V2 API")
+gemini_retry_strategy = retry(
+    retry=retry_if_exception_type(Exception), # In SDK v2, check generic or specific 429 string
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    stop=stop_after_attempt(5),
+    before_sleep=before_retry_log,
+    reraise=True
+)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        logger.error("❌ GEMINI_API_KEY not found in .env file.")
+        sys.exit(1)
+    logger.info(f"✅ Gemini API Key detected. {app.title} is ready.")
+    yield
+
+# 4. Initialize FastAPI
+app = FastAPI(title="Guardian V2 API - Gemini Edition", lifespan=lifespan)
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, restrict this to your React app's URL
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# --- 5. LOGGING MIDDLEWARE ---
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    logger.info(f"📩 Incoming request: {request.method} {request.url.path}")
+    response = await call_next(request)
+    logger.info(f"📤 Response status: {response.status_code}")
+    return response
 
 class CodeRepairRequest(BaseModel):
     source_code: str
     language: str
     error_message: str
 
+# --- 6. WRAPPED API CALL ---
+@gemini_retry_strategy
+async def get_gemini_fix(user_prompt, system_prompt):
+    return await client.aio.models.generate_content(
+        model="gemini-1.5-flash",
+        config=types.GenerateContentConfig(
+            system_instruction=system_prompt,
+            temperature=0.2,
+            response_mime_type="application/json",
+        ),
+        contents=user_prompt
+    )
+
 @app.post("/api/heal-code")
 async def heal_code(request: CodeRepairRequest):
     try:
-        # 1. The System Prompt tells the AI exactly how to act
         system_prompt = """
         You are an elite QA Automation Engineer and Code Optimizer. 
-        The user will provide broken code and an error message. 
         You must fix the code and return a strictly formatted JSON response.
-        Do not include markdown blocks like ```json. Just return raw JSON.
-        Format required:
-        {
-            "fixed_code": "the exact fixed code string",
-            "explanation": "A short, 1-sentence explanation of why it works",
-            "confidence": 0.95
-        }
+        Format: {"fixed_code": "string", "explanation": "string", "confidence": float}
         """
 
-        # 2. The User Prompt provides the specific broken data
-        user_prompt = f"""
-        Language: {request.language}
-        Error Message: {request.error_message}
-        Broken Code:
-        {request.source_code}
-        """
+        user_prompt = f"Language: {request.language}\nError: {request.error_message}\nCode:\n{request.source_code}"
 
-        # 3. Call the AI
-        response = await client.chat.completions.create(
-            model="gpt-4o-mini", # Or whichever model you prefer
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            temperature=0.2, # Keep it low for logical code fixes
-            response_format={ "type": "json_object" } # Forces the AI to return valid JSON
-        )
+        # Call the retrying function
+        response = await get_gemini_fix(user_prompt, system_prompt)
+        ai_result = json.loads(response.text)
 
-        # 4. Parse the AI's string response into an actual Python dictionary
-        ai_result = json.loads(response.choices[0].message.content)
-
-        # 5. Send it back to Postman / React!
         return {
             "status": "success",
             "original_code": request.source_code,
@@ -76,4 +103,12 @@ async def heal_code(request: CodeRepairRequest):
         }
 
     except Exception as e:
+        # Check if it's still a 429 after retries
+        if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+            raise HTTPException(status_code=429, detail="Gemini quota exhausted. Please try again in a minute.")
+        logger.error(f"Final Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
