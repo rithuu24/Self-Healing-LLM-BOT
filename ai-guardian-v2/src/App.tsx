@@ -217,7 +217,7 @@ export default function App() {
                 <CardDescription className="text-zinc-500 text-xs">Transforming legacy syntax into modern standards.</CardDescription>
               </CardHeader>
               <CardContent>
-                <PolyglotBridge fromLang="JS" toLang="TS" progress={82} status="Injecting type definitions..." />
+                <PolyglotBridge />
               </CardContent>
             </Card>
           </TabsContent>
