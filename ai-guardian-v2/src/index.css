@@ -164,7 +164,6 @@
   }
   .no-scrollbar {
     -ms-overflow-style: none;
-    -webkit-scrollbar-width: none;
     scrollbar-width: none;
   }
 }
