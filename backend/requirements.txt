@@ -1,6 +1,0 @@
-fastapi
-uvicorn
-ollama
-tenacity
-pydantic
-python-dotenv
