@@ -1,36 +1,35 @@
-import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
+public class ArraySearcher {
 
-public class LoginAutomationTest {
+    // Method to find the index of a target number in an array
+    public static int findTarget(int[] numbers, int target) {
+        
+        // ❌ THE BROKEN LINE:
+        // Using '<=' instead of '<' will cause an ArrayIndexOutOfBoundsException
+        // when the loop tries to access numbers[numbers.length]
+        for (int i = 0; i <= numbers.length; i++) {
+            if (numbers[i] == target) {
+                return i;
+            }
+        }
+        return -1; // Return -1 if the target is not found
+    }
 
-    @Test
-    public void testEnterpriseLoginFlow() {
-        // Initialize the browser driver
-        WebDriver driver = new ChromeDriver();
+    public static void main(String[] args) {
+        int[] data = {10, 25, 32, 45, 50};
+        int searchFor = 60; 
+        
+        System.out.println("Starting search operation...");
         
         try {
-            // Navigate to the company portal
-            driver.get("https://enterprise-portal.com/login");
+            int result = findTarget(data, searchFor);
             
-            // Enter username and password
-            driver.findElement(By.id("username")).sendKeys("admin_user");
-            driver.findElement(By.id("password")).sendKeys("SecurePass123!");
-            
-            // ✅ FIXED: Updated button ID to match current frontend
-            // The button ID was changed from 'login-btn-legacy' to 'submit-auth'
-            WebElement loginButton = driver.findElement(By.id("submit-auth"));
-            loginButton.click();
-            
-            // Verify successful login by checking the URL
-            assertTrue(driver.getCurrentUrl().contains("/dashboard"));
-            
-        } finally {
-            // Always close the browser
-            driver.quit();
+            if (result != -1) {
+                System.out.println("Target found at index: " + result);
+            } else {
+                System.out.println("Target not found in the array.");
+            }
+        } catch (Exception e) {
+            System.out.println("CRASH DETECTED: " + e.toString());
         }
     }
 }
