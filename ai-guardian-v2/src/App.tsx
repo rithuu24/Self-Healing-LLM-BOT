@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { 
   ShieldCheck, User, LogOut, Settings, ChevronDown, CreditCard, 
   Sparkles, BarChart3, Globe2, Wrench, Home as HomeIcon, Zap,
@@ -17,40 +17,19 @@ import { Badge } from "@/components/ui/badge";
 // Research Modules & Custom Components
 import { Home } from "@/components/ui/Home";
 import { SignInModal } from "@/components/ui/SignInModal";
-import {Analytics }from "@/components/ui/Analytics";
+import { Analytics } from "@/components/ui/Analytics";
 import { CodeHealer } from "@/components/ui/CodeHealer";
-import { CodeComparison } from "@/components/ui/CodeComparison";
+import { OptimizerTab } from "@/components/ui/OptimizerTab"; // <--- Added new Optimizer
 import { PolyglotBridge } from "@/components/ui/PolyglotBridge";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("home");
-  const [profileSubTab, setProfileSubTab] = useState("overview"); // <-- Tracks the active profile view
+  const [profileSubTab, setProfileSubTab] = useState("overview");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [logs, setLogs] = useState<any[]>([]);
 
-  // Live Telemetry Simulation logic
-  useEffect(() => {
-    const sequence = [
-      { id: 1, type: 'info', message: 'Initializing Test Suite: auth.spec.ts' },
-      { id: 2, type: 'error', message: 'Test Failed: Selector #login-btn not found.' },
-      { id: 3, type: 'healing', message: 'LLM analyzing DOM snapshot... Attempting repair.' },
-      { id: 4, type: 'healing', message: 'Patching: Updated selector to [data-testid="submit-login"]' },
-      { id: 5, type: 'success', message: 'Retry successful. Test Passed.' },
-    ];
-
-    let i = 0;
-    const interval = setInterval(() => {
-      if (i < sequence.length) {
-        setLogs(prev => [...prev, sequence[i]].slice(-8)); 
-        i++;
-      }
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // NEW: Smart Navigation Handler for Profile Menu
+  // Smart Navigation Handler for Profile Menu
   const handleProfileNav = (subTab: string) => {
     setProfileSubTab(subTab);
     setActiveTab("profile");
@@ -233,26 +212,14 @@ export default function App() {
             <Home onNavigate={(target) => setActiveTab(target)} />
           </TabsContent>
 
+          {/* 🛠️ FIXED: Replaced old CodeComparison with the new OptimizerTab */}
           <TabsContent value="optimizer" className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <Card className="bg-zinc-950 border-zinc-800 shadow-2xl">
-              <CardHeader className="border-b border-zinc-900 pb-8">
-                <CardTitle className="text-xl font-bold text-white tracking-tight flex items-center gap-3">
-                  <Zap className="w-5 h-5 text-amber-400" /> Logic Visualization
-                </CardTitle>
-                <CardDescription className="text-zinc-500">LLM-driven repair operations on stale unit test selectors.</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-8">
-                <CodeComparison 
-                  oldCode={`expect(await page.innerText('button#login-btn')).toBe('Sign In')`}
-                  newCode={`expect(await page.locator('button[data-testid="submit-login"]')).toBe('Login Now')`}
-                  explanation="The ID selector became stale due to a UI refactor. Guardian auto-identified the new data-testid attribute."
-                />
-              </CardContent>
-            </Card>
+            <OptimizerTab />
           </TabsContent>
 
-          <TabsContent value="analytics" className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-6">
-            <Analytics logs={logs} />
+          {/* 🛠️ FIXED: Removed the invalid `logs={logs}` prop */}
+          <TabsContent value="analytics" className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <Analytics />
           </TabsContent>
 
           <TabsContent value="healer" className="animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -273,7 +240,7 @@ export default function App() {
             </Card>
           </TabsContent>
 
-          {/* HIDDEN TAB: ACCOUNT PROFILE (Now passes the subTab state down) */}
+          {/* HIDDEN TAB: ACCOUNT PROFILE */}
           <TabsContent value="profile" className="animate-in fade-in slide-in-from-bottom-4 duration-700">
             <ProfileView currentTab={profileSubTab} onTabChange={setProfileSubTab} />
           </TabsContent>

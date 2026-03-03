@@ -1,16 +1,19 @@
 import path from "path"
 import react from "@vitejs/plugin-react"
-import tailwindcss from '@tailwindcss/vite' // Add this line
+import tailwindcss from "@tailwindcss/vite"
 import { defineConfig } from "vite"
 
 export default defineConfig({
   plugins: [
     react(),
-    tailwindcss(), // Add this line
+    tailwindcss(),
   ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    open: true   // automatically opens default browser
+  }
 })
