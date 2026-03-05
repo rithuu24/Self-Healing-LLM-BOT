@@ -5,14 +5,10 @@ from app.services.ollama import query_ollama
 router = APIRouter()
 
 class SummaryRequest(BaseModel):
-    incident: str
+    logs: str
 
 @router.post("/")
-async def summarize_incident(request: SummaryRequest):
-    prompt = f"""
-Summarize this cybersecurity incident in 5 bullet points:
-
-{request.incident}
-"""
+async def summarize_logs(request: SummaryRequest):
+    prompt = f"Summarize the following logs:\n{request.logs}"
     result = query_ollama(prompt)
     return {"summary": result}

@@ -1,48 +1,32 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from app.services.ollama import query_ollama
-import json
-import re
+import requests
+import os
+from dotenv import load_dotenv
 
-router = APIRouter()
+load_dotenv()
 
-class LogRequest(BaseModel):
-    logs: str
+OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")
+MODEL_NAME = os.getenv("MODEL_NAME", "llama3")
 
-def clean_json_response(text: str):
-    # Remove markdown code blocks if present
-    text = re.sub(r"```json|```", "", text).strip()
-    return text
-
-@router.post("/")
-async def analyze_logs(request: LogRequest):
-    prompt = f"""
-You are a cybersecurity AI.
-
-IMPORTANT:
-Return ONLY valid JSON.
-Do not use markdown.
-Do not explain anything.
-
-Format:
-{{
-  "threat_level": "LOW | MEDIUM | HIGH",
-  "anomalies": [],
-  "recommendation": ""
-}}
-
-Logs:
-{request.logs}
-"""
-
-    raw_result = query_ollama(prompt)
-
+def query_ollama(prompt: str) -> str:
     try:
-        cleaned = clean_json_response(raw_result)
-        parsed = json.loads(cleaned)
-        return parsed  # return real JSON
-    except Exception:
-        raise HTTPException(
-            status_code=500,
-            detail="Model returned invalid JSON"
+        response = requests.post(
+            OLLAMA_URL,
+            json={
+                "model": MODEL_NAME,
+                "prompt": prompt,
+                "stream": False
+            },
+            timeout=60
         )
+
+        response.raise_for_status()
+        return response.json()["response"]
+
+    except requests.exceptions.Timeout:
+        raise Exception("Ollama request timed out")
+
+    except requests.exceptions.ConnectionError:
+        raise Exception("Ollama server not running")
+
+    except Exception as e:
+        raise Exception(f"Ollama failure: {str(e)}")
