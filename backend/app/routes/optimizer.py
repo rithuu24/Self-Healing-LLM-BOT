@@ -1,41 +1,40 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-import json
-import re
+import logging
 
-from app.services.ollama import query_ollama
+# Import the Ollama service (we will write this next)
+from app.services.ollama import generate_optimization
 
+# Initialize the router
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
-class OptimizeRequest(BaseModel):
-    code: str
+# Define the expected JSON payload from the React frontend
+class OptimizerRequest(BaseModel):
     language: str
+    source_code: str
 
+# Define the expected JSON response sent back to React
+class OptimizerResponse(BaseModel):
+    optimized_code: str
+    optimization_summary: str
 
-def clean_json(text: str):
-    text = re.sub(r"```json|```", "", text).strip()
-    return json.loads(text)
-
-
-@router.post("/")
-async def optimize_code(request: OptimizeRequest):
-
-    prompt = f"""
-Optimize the following {request.language} code.
-
-Return JSON only:
-
-{{
- "optimized_code": "",
- "optimization_summary": ""
-}}
-
-Code:
-{request.code}
-"""
-
-    result = query_ollama(prompt)
-
-    parsed = clean_json(result)
-
-    return parsed
+@router.post("/optimize", response_model=OptimizerResponse)
+async def optimize_code(request: OptimizerRequest):
+    try:
+        logger.info(f"Optimizing {request.language} code...")
+        
+        # Call the LLM service
+        result = await generate_optimization(
+            language=request.language, 
+            source_code=request.source_code
+        )
+        
+        return OptimizerResponse(
+            optimized_code=result["optimized_code"],
+            optimization_summary=result["optimization_summary"]
+        )
+        
+    except Exception as e:
+        logger.error(f"Optimization failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"LLM Engine Error: {str(e)}")

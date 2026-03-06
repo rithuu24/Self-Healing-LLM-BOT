@@ -19,7 +19,7 @@ import { Home } from "@/components/ui/Home";
 import { SignInModal } from "@/components/ui/SignInModal";
 import { Analytics } from "@/components/ui/Analytics";
 import { CodeHealer } from "@/components/ui/CodeHealer";
-import { OptimizerTab } from "@/components/ui/OptimizerTab"; // <--- Added new Optimizer
+import { OptimizerTab } from "@/components/ui/OptimizerTab";
 import { PolyglotBridge } from "@/components/ui/PolyglotBridge";
 
 export default function App() {
