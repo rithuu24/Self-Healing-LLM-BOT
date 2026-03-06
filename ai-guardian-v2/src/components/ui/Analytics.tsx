@@ -93,7 +93,8 @@ interface DashboardResponse {
 
 /* ---------------- MAIN COMPONENT ---------------- */
 
-// Must be the default export and named App for the environment
+// The Canvas preview environment strictly requires a default export named 'App'.
+// We are also exporting 'Analytics' for your local environment compatibility.
 export default function App() {
   const [activeMetric, setActiveMetric] = useState<"latency" | "repairs">("latency");
   const [dashboardData, setDashboardData] = useState<DashboardResponse | null>(null);
@@ -348,6 +349,9 @@ export default function App() {
     </div>
   );
 }
+
+// Ensure the local environment continues to work with the named import 
+export { App as Analytics };
 
 /* ---------------- SUB COMPONENTS ---------------- */
 
