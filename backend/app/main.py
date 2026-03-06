@@ -1,73 +1,51 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
 
+# Import all the route modules from the routes directory
 from app.routes import (
-    analyze,
-    summary,
-    risk,
-    codehealer,
     optimizer,
     polyglot,
-    analytics
+    codehealer,
+    analytics,
+    home,
+    auth
 )
 
+# Initialize the main FastAPI application
 app = FastAPI(
-    title="Guardian V2 Backend",
-    version="2.0"
+    title="Guardian V2 API",
+    description="Neural QA Engine Backend - Powered by Local Ollama",
+    version="2.0.0"
 )
 
-# Root health check
+# Set up CORS middleware to allow your React/Vite frontend to communicate with this backend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "[http://127.0.0.1:5173](http://127.0.0.1:5173)"], 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include all the individual routers
+# The prefix="/api" ensures all your React fetch() calls map correctly
+app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(home.router, prefix="/api", tags=["Home UI Metrics"])
+app.include_router(optimizer.router, prefix="/api", tags=["Code Optimizer"])
+app.include_router(polyglot.router, prefix="/api", tags=["Polyglot Translator"])
+app.include_router(codehealer.router, prefix="/api", tags=["Code Healer"])
+app.include_router(analytics.router, prefix="/api", tags=["Dashboard Analytics"])
+
+# Health check endpoint
 @app.get("/")
-def root():
-    return {"message": "Guardian V2 Backend Running"}
+async def root():
+    return {
+        "status": "online", 
+        "engine": "Guardian V2 AI Core", 
+        "message": "FastAPI server is running and ready for connections."
+    }
 
-
-# -----------------------------
-# Security Analysis APIs
-# -----------------------------
-
-app.include_router(
-    analyze.router,
-    prefix="/api/analyze",
-    tags=["Analyze"]
-)
-
-app.include_router(
-    summary.router,
-    prefix="/api/summary",
-    tags=["Summary"]
-)
-
-app.include_router(
-    risk.router,
-    prefix="/api/risk",
-    tags=["Risk"]
-)
-
-
-# -----------------------------
-# Guardian V2 AI Tools
-# -----------------------------
-
-app.include_router(
-    codehealer.router,
-    prefix="/api/codehealer",
-    tags=["CodeHealer"]
-)
-
-app.include_router(
-    optimizer.router,
-    prefix="/api/optimizer",
-    tags=["Optimizer"]
-)
-
-app.include_router(
-    polyglot.router,
-    prefix="/api/polyglot",
-    tags=["PolyglotBridge"]
-)
-
-app.include_router(
-    analytics.router,
-    prefix="/api/analytics",
-    tags=["Analytics"]
-)
+# This allows you to run the file directly from the command line using `python app/main.py`
+if __name__ == "__main__":
+    uvicorn.run("app.main:app", host="127.0.0.1", port=8000, reload=True)
