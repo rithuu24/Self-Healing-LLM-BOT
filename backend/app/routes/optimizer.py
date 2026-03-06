@@ -4,20 +4,21 @@ from app.services.ollama import query_ollama
 
 router = APIRouter()
 
-class CodeRequest(BaseModel):
+class OptimizeRequest(BaseModel):
     code: str
     language: str
 
 @router.post("/")
-async def heal_code(request: CodeRequest):
+async def optimize_code(request: OptimizeRequest):
     prompt = f"""
-You are an expert {request.language} debugger.
+Optimize the following {request.language} code.
 
-Return JSON only:
+Return JSON:
 {{
-  "issues": [],
-  "fixed_code": "",
-  "explanation": ""
+  "optimized_code": "",
+  "time_complexity": "",
+  "space_complexity": "",
+  "improvements": []
 }}
 
 Code:

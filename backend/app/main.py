@@ -1,23 +1,14 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-
-from app.routes import analyze, summary, risk
-
-app = FastAPI(title="Guardian V2 Backend")
-
-# CORS (needed if frontend runs on different port)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # restrict in production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+from app.routes import (
+    analyze,
+    summary,
+    risk,
+    codehealer,
+    optimizer,
+    polyglot,
+    analytics
 )
 
-@app.get("/")
-def root():
-    return {"message": "Guardian V2 Backend Running"}
-
-app.include_router(analyze.router, prefix="/api/analyze", tags=["Analyze"])
-app.include_router(summary.router, prefix="/api/summary", tags=["Summary"])
-app.include_router(risk.router, prefix="/api/risk", tags=["Risk"])
+app.include_router(codehealer.router, prefix="/api/codehealer", tags=["CodeHealer"])
+app.include_router(optimizer.router, prefix="/api/optimizer", tags=["Optimizer"])
+app.include_router(polyglot.router, prefix="/api/polyglot", tags=["PolyglotBridge"])
+app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"])
