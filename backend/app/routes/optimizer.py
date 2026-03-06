@@ -1,13 +1,15 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-import logging
+import os
+from dotenv import load_dotenv
 
-# Import the Ollama service (we will write this next)
+# Import the actual AI service function
 from app.services.ollama import generate_optimization
 
-# Initialize the router
+# Load environment variables
+load_dotenv()
+
 router = APIRouter()
-logger = logging.getLogger(__name__)
 
 # Define the expected JSON payload from the React frontend
 class OptimizerRequest(BaseModel):
@@ -21,20 +23,31 @@ class OptimizerResponse(BaseModel):
 
 @router.post("/optimize", response_model=OptimizerResponse)
 async def optimize_code(request: OptimizerRequest):
+    """
+    Endpoint to optimize source code using the local Ollama engine.
+    This replaces the previous mock implementation with a live AI call.
+    """
     try:
-        logger.info(f"Optimizing {request.language} code...")
-        
-        # Call the LLM service
+        # Check if code is provided
+        if not request.source_code.strip():
+            raise HTTPException(status_code=400, detail="Source code cannot be empty.")
+
+        # Call the real AI service
+        # This function in app/services/ollama.py now handles the heavy lifting
         result = await generate_optimization(
             language=request.language, 
             source_code=request.source_code
         )
         
+        # Return the AI-generated results to the frontend
         return OptimizerResponse(
             optimized_code=result["optimized_code"],
             optimization_summary=result["optimization_summary"]
         )
         
     except Exception as e:
-        logger.error(f"Optimization failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"LLM Engine Error: {str(e)}")
+        # If the LLM engine fails or is offline, return a 500 error
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Neural Engine Error: {str(e)}"
+        )

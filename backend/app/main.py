@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+import os
+from dotenv import load_dotenv
 
 # Import all the route modules from the routes directory
 from app.routes import (
@@ -11,6 +13,10 @@ from app.routes import (
     home,
     auth
 )
+
+# load environment variables from .env file
+load_dotenv()
+model = os.getenv("OLLAMA_DEFAULT_MODEL") 
 
 # Initialize the main FastAPI application
 app = FastAPI(

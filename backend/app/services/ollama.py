@@ -1,6 +1,12 @@
 import ollama
 import json
 import logging
+import os
+from dotenv import load_dotenv
+
+# load environment variables from .env file
+load_dotenv()
+model = os.getenv("OLLAMA_DEFAULT_MODEL") 
 
 # Set up basic logging so you can see AI errors in your terminal
 logging.basicConfig(level=logging.INFO)
